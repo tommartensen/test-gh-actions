@@ -21,7 +21,7 @@ jobs:
       matrix:
         version: [ "1.19", "1.20" ]
     container:
-      image: nginx:{{ matrix.version }}
+      image: nginx:${{ matrix.version }}
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
 
