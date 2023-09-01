@@ -76,8 +76,6 @@ jobs:
 
           EOF
 
-          echo "$DRY_RUN"
-
   check-jira:
     name: Check Jira tickets for release
     runs-on: ubuntu-latest
