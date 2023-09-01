@@ -51,7 +51,7 @@ run-name: >-
     format('Cut {0}{1}{2}',
       github.event.milestone.title,
       inputs.version,
-      fromJSON('[" (dry-run)", ""]')[github.event.inputs.dry-run != true]
+      fromJSON('[" (dry-run)", ""]')[inputs.dry-run != true]
     )
   }}
 
