@@ -12,7 +12,7 @@ jobs:
       - run: |
           cat <<EOF >>"$GITHUB_STEP_SUMMARY"
           \`\`\`
-          ${{toJSON(github.event)}}
+          ${{toJSON(github.event.head_commit.url)}}
           \`\`\`
           EOF
           fi
