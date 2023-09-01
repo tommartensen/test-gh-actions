@@ -79,8 +79,8 @@ jobs:
   check-jira:
     name: Check Jira tickets for release
     runs-on: ubuntu-latest
+    if: github.event.inputs.check-jira-issues != 'false'
     steps:
       - name: Query JIRA
-        if: github.event.inputs.check-jira-issues != 'false'
         run: |
           echo "Will check JIRA"
