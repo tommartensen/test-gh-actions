@@ -10,8 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: |
-          if [ "${{github.event_name}}" = "workflow_dispatch" ]; then
-            cat <<EOF >>"$GITHUB_STEP_SUMMARY"
+          cat <<EOF >>"$GITHUB_STEP_SUMMARY"
           \`\`\`
           ${{toJSON(github.event)}}
           \`\`\`
