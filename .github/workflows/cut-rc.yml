@@ -78,7 +78,6 @@ jobs:
 
   check-jira:
     name: Check Jira tickets for release
-    needs: [variables, properties]
     runs-on: ubuntu-latest
     steps:
       - name: Query JIRA
