@@ -51,7 +51,7 @@ run-name: >-
     format('Cut {0}{1}{2}',
       github.event.milestone.title,
       inputs.version,
-      fromJSON('[" (dry-run)", ""]')[inputs.dry-run != true]
+      fromJSON('[" (dry-run)", ""]')[github.event.inputs.dry-run != 'false']
     )
   }}
 
@@ -75,3 +75,13 @@ jobs:
           \`\`\`
 
           EOF
+
+  check-jira:
+    name: Check Jira tickets for release
+    needs: [variables, properties]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Query JIRA
+        if: github.event.inputs.check-jira-issues != 'false'
+        run: |
+          echo "Will check JIRA"
