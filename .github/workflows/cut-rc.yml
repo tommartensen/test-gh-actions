@@ -1,0 +1,77 @@
+name: Cut RC
+on:
+  milestone:
+    types:
+      - closed
+
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Full RC version (A.B.C[-N]-rc.D)
+        required: true
+        default: 0.0.0-test-rc.1
+        type: string
+      dry-run:
+        description: Dry-run
+        required: false
+        default: true
+        type: boolean
+      create-k8s-cluster:
+        description: Create a GKE demo cluster
+        required: true
+        default: true
+        type: boolean
+      create-os4-cluster:
+        description: Create an Openshift 4 demo cluster
+        required: true
+        default: true
+        type: boolean
+      create-long-cluster:
+        description: Create a long-running cluster on RC1
+        required: true
+        default: true
+        type: boolean
+      check-jira-issues:
+        description: Check Jira issues for current release
+        required: true
+        default: true
+        type: boolean
+
+env:
+  main_branch: ${{github.event.repository.default_branch}}
+  script_url: /repos/${{github.repository}}/contents/.github/workflows/scripts/common.sh?ref=${{ github.ref_name }}
+  DRY_RUN: ${{ fromJSON('["true", "false"]')[github.event.inputs.dry-run != 'true'] }}
+  ACCEPT_RAW: "Accept: application/vnd.github.v3.raw"
+  GH_TOKEN: ${{ github.token }}
+  GH_NO_UPDATE_NOTIFIER: 1
+  TIMEOUT_WAIT_FOR_IMAGES_SECONDS: 3600
+
+run-name: >-
+  ${{
+    format('Cut {0}{1}{2}',
+      github.event.milestone.title,
+      inputs.version,
+      fromJSON('[" (dry-run)", ""]')[inputs.dry-run != true]
+    )
+  }}
+
+# Ensure that only a single release automation workflow can run at a time.
+concurrency: Release automation
+
+jobs:
+  run-parameters:
+    name: Run parameters
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          cat <<EOF >>"$GITHUB_STEP_SUMMARY"
+          Inputs:
+          \`\`\`
+          ${{toJSON(inputs)}}
+          \`\`\`
+          \`\`\`
+          GitHub Event:
+          ${{toJSON(github.event)}}
+          \`\`\`
+
+          EOF
