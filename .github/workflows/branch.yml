@@ -1,0 +1,19 @@
+name: Branch
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  run-parameters:
+    name: Run parameters
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          if [ "${{github.event_name}}" = "workflow_dispatch" ]; then
+            cat <<EOF >>"$GITHUB_STEP_SUMMARY"
+          \`\`\`
+          ${{toJSON(github.event)}}
+          \`\`\`
+          EOF
+          fi
