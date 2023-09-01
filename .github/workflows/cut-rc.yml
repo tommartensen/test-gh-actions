@@ -84,3 +84,25 @@ jobs:
       - name: Query JIRA
         run: |
           echo "Will check JIRA"
+
+  clusters:
+    name: Setup demo clusters
+    secrets: inherit
+    needs: [variables, cut-rc]
+    uses: stackrox/actions/.github/workflows/create-demo-clusters.yml@tm/debug-bools
+    if: >- # Skip if no clusters are going to be created.
+      github.event.inputs.create-k8s-cluster != 'false' ||
+      github.event.inputs.create-os4-cluster != 'false' ||
+      needs.variables.outputs.rc == '1' &&
+      github.event.inputs.create-long-cluster != 'false'
+    with:
+      version: ${{needs.variables.outputs.milestone}}
+      create-k8s-cluster: ${{github.event.inputs.create-k8s-cluster != 'false'}}
+      create-os4-cluster: ${{github.event.inputs.create-os4-cluster != 'false'}}
+      create-long-cluster: ${{needs.variables.outputs.rc == '1' && github.event.inputs.create-long-cluster != 'false'}}
+      dry-run: ${{github.event.inputs.dry-run == 'true'}}
+      workflow-ref: tm/debug-bools
+      kube-burner-config-ref: ${{needs.variables.outputs.milestone}}
+      kube-burner-config-repo: stackrox
+      cluster-with-fake-load-name: gke-long-running-fake-load-${{needs.variables.outputs.milestone}}
+      cluster-with-real-load-name: gke-long-running-real-load-${{needs.variables.outputs.milestone}}
