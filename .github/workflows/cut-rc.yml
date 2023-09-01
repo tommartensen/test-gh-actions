@@ -85,10 +85,17 @@ jobs:
         run: |
           echo "Will check JIRA"
 
+  variables:
+    name: Setup variables
+    uses: ./.github/workflows/variables.yml
+    with:
+      version: ${{format('{0}{1}', github.event.milestone.title, github.event.inputs.version)}}
+      assert-format: A.B.C[-N]-rc.D
+
   clusters:
     name: Setup demo clusters
     secrets: inherit
-    needs: [variables, cut-rc]
+    needs: [variables]
     uses: stackrox/actions/.github/workflows/create-demo-clusters.yml@tm/debug-bools
     if: >- # Skip if no clusters are going to be created.
       github.event.inputs.create-k8s-cluster != 'false' ||
