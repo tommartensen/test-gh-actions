@@ -8,7 +8,7 @@ jobs:
   run-parameters:
     name: Run parameters
     runs-on: ubuntu-latest
-    
+
     steps:
       - env:
           COLLECTION_METHOD: core_bpf
@@ -16,3 +16,4 @@ jobs:
           echo "Env setting: $COLLECTION_METHOD"
           export COLLECTION_METHOD="KERNEL_MODULE"
           echo "New setting? $COLLECTION_METHOD"
+          ${{ github.workspace }}/script.sh
