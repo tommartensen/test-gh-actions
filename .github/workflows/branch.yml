@@ -8,11 +8,11 @@ jobs:
   run-parameters:
     name: Run parameters
     runs-on: ubuntu-latest
+    
     steps:
-      - run: |
-          cat <<EOF >>"$GITHUB_STEP_SUMMARY"
-          \`\`\`
-          ${{toJSON(github.event.head_commit.url)}}
-          \`\`\`
-          EOF
-          fi
+      - env:
+          COLLECTION_METHOD: core_bpf
+        run: |
+          echo "Env setting: $COLLECTION_METHOD"
+          export COLLECTION_METHOD="KERNEL_MODULE"
+          echo "New setting? $COLLECTION_METHOD"
