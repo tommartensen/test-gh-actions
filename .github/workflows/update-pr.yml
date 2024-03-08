@@ -1,0 +1,31 @@
+name: Update infra
+
+on:
+  pull_request:
+    types:
+    - closed
+
+jobs:
+  version:
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.merged == true
+    steps:
+      - name: Find tag
+        run: |
+          echo "PR Number: ${{ github.event.pull_request.number }}"
+          echo "Merge Commit SHA: ${{ github.event.pull_request.merge_commit_sha }}"
+
+  # update-existing-infra-pr:
+  #   runs-on: ubuntu-latest
+  #   needs: version
+  #   if: |
+  #     github.event.pull_request.merged == true &&
+  #     contains(github.event.pull_request.labels.*.name, 'create-infra-pr')
+
+  # create-new-infra-pr:
+  #   runs-on: ubuntu-latest
+  #   needs: version
+  #   if: |
+  #     github.event.pull_request.merged == true &&
+  #     !contains(github.event.pull_request.labels.*.name, 'create-infra-pr')
+  #   steps:
