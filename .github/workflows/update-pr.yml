@@ -20,7 +20,7 @@ jobs:
         id: tag_version
         uses: mathieudutour/github-tag-action@v6.1
         with:
-          github_token: ${{ github.token }}
+          github_token: ${{ secrets.BOT_GH_TOKEN }}
           tag_prefix: ""
       - name: Create a GitHub release
         uses: ncipollo/release-action@v1
