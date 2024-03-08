@@ -30,14 +30,8 @@ jobs:
           body: ${{ steps.tag_version.outputs.changelog }}
 
   create-or-update-infra-pr:
-    runs-on: ubuntu-latest
     needs: version
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.merge_commit_sha }}
-      - name: Create or update infra PR
-        uses: ./.github/workflows/create-or-update-infra-pr.yaml
-        with:
-          version: ${{ needs.version.outputs.version }}
-          secrets: inherit
+    uses: ./.github/workflows/create-or-update-infra-pr.yaml
+    with:
+      version: ${{ needs.version.outputs.version }}
+    secrets: inherit
