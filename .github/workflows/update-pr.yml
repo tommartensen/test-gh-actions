@@ -3,11 +3,13 @@ name: Release CI
 on:
   pull_request:
     types:
-    - closed
+    - opened
+    - synchronize
 
 jobs:
   debug:
     runs-on: ubuntu-latest
+    if: github.event.pull_request.base.ref == 'master'
     steps:
       - run: |
           echo "base ref: ${{ github.event.pull_request.base.ref }}"
