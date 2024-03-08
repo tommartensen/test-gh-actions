@@ -8,7 +8,7 @@ on:
 jobs:
   version:
     runs-on: ubuntu-latest
-    if: github.event.pull_request.merged == true && ${{ github.event.pull_request.base.ref }} == 'tm-stuff'
+    if: github.event.pull_request.merged == true && ${{ github.event.pull_request.base.ref }} == 'master'
     outputs:
       version: ${{ steps.tag_version.outputs.new_tag }}
     steps:
