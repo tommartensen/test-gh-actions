@@ -6,7 +6,7 @@ jobs:
   notify:
     runs-on: ubuntu-latest
     steps:
-      - name: Print github.event.pull_request context
+      - name: Print context
         run: |
             echo "Milestone: ${{ github.event.milestone.title }}"
             echo "Milestone Link: ${{ github.event.milestone.html_url }}"
