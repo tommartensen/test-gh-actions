@@ -1,0 +1,10 @@
+name: Milestoner
+on:
+  pull_request:
+    types: [milestoned, demilestoned]
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Print github.event.pull_request context
+        run: echo "${{ toJSON(github) }}"
