@@ -7,4 +7,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Print github.event.pull_request context
-        run: echo "${{ toJSON(github) }}"
+        run: |
+            echo "Milestone: ${{ github.event.milestone.title }}"
+            echo "Milestone Link: ${{ github.event.milestone.html_url }}"
+            echo "PR: ${{ github.event.pull_request.html_url }}"
+            echo "PR Title: ${{ github.event.pull_request.title }}"
+            echo "PR Author: ${{ github.event.pull_request.user.login }}"
