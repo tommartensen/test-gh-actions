@@ -13,3 +13,12 @@ jobs:
             echo "PR: ${{ github.event.pull_request.html_url }}"
             echo "PR Title: ${{ github.event.pull_request.title }}"
             echo "PR Author: ${{ github.event.pull_request.user.login }}"
+
+      - name: Find Jira issue and print information
+        # TODO: find issue key from PR title
+        run: |
+          set -uo pipefail
+          curl \
+            -sSL \
+            --location 'https://issues.redhat.com/rest/api/2/issue/ROX-24345' \
+            --header 'Authorization: Bearer ${{ secrets.JIRA_TOKEN }}' | jq -r '.key, .fields.summary, .fields.priority.name, .fields.assignee.displayName, .fields.status.name, .fields.issuetype.name'
