@@ -12,9 +12,9 @@ jobs:
           PR_TITLE: ${{ github.event.pull_request.title }}
         run: |
             if [ "${{ github.event.action}}" = "milestoned" ]; then
-              echo "event-action=added" >> "${GITHUB_OUTPUT}"
+              echo "event-action=added to" >> "${GITHUB_OUTPUT}"
             else
-              echo "event-action=removed" >> "${GITHUB_OUTPUT}"
+              echo "event-action=removed from" >> "${GITHUB_OUTPUT}"
             fi
 
             ISSUE_ID="$(echo "${PR_TITLE}" | grep --only-matching 'ROX-[0-9]\+' || true)"
@@ -23,7 +23,7 @@ jobs:
                 -sSL \
                 --location "https://issues.redhat.com/rest/api/2/issue/${ISSUE_ID}" \
                 --header "Authorization: Bearer ${{ secrets.JIRA_TOKEN }}" \
-              | jq -r '.key, .fields.summary, .fields.priority.name, .fields.assignee.displayName, .fields.status.name, .fields.issuetype.name')
+              | jq '"\(.key) "\(.fields.summary), "\(.fields.priority.name), "\(.fields.assignee.displayName), "\(.fields.status.name), "\(.fields.issuetype.name)"')
               echo "${JIRA_INFO}"
               # echo "jira-info=${JIRA_INFO}" >> "${GITHUB_OUTPUT}"
             fi
@@ -36,5 +36,5 @@ jobs:
           channel-id: C075SGGM4US
           payload: >-
             {
-              "text": "PR <${{ github.event.pull_request.html_url }}|${{ github.event.pull_request.title }}> (Author: ${{ github.event.pull_request.user.login }}) ${{steps.context.outputs.event-action }} to milestone <${{ github.event.milestone.html_url }}|${{ github.event.milestone.title }}>."
+              "text": "PR <${{ github.event.pull_request.html_url }}|${{ github.event.pull_request.title }}> (Author: ${{ github.event.pull_request.user.login }}) ${{steps.context.outputs.event-action }} milestone <${{ github.event.milestone.html_url }}|${{ github.event.milestone.title }}>."
             }
