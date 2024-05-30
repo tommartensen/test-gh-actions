@@ -6,18 +6,25 @@ jobs:
   notify:
     runs-on: ubuntu-latest
     steps:
-      - name: Print context
+      - name: Determine context
+        id: context
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
         run: |
-            ISSUE_ID="$(echo ${{ github.event.pull_request.title }} | grep --only-matching 'ROX-[0-9]\+' || true)"
-            if [ -z "${ISSUE_ID}" ]; then
-              echo "no issue id found"
+            if [ "${{ github.event.action}}" = "milestoned" ]; then
+              echo "event-action=added" >> "${GITHUB_OUTPUT}"
             else
-              echo "issue id found"
-              curl \
+              echo "event-action=removed" >> "${GITHUB_OUTPUT}"
+            fi
+
+            ISSUE_ID="$(echo "${PR_TITLE}" | grep --only-matching 'ROX-[0-9]\+' || true)"
+            if [ -n "${ISSUE_ID}" ]; then
+              JIRA_INFO=$(curl \
                 -sSL \
                 --location "https://issues.redhat.com/rest/api/2/issue/${ISSUE_ID}" \
                 --header "Authorization: Bearer ${{ secrets.JIRA_TOKEN }}" \
-              | jq -r '.key, .fields.summary, .fields.priority.name, .fields.assignee.displayName, .fields.status.name, .fields.issuetype.name'
+              | jq -r '.key, .fields.summary, .fields.priority.name, .fields.assignee.displayName, .fields.status.name, .fields.issuetype.name')
+              echo "jira-info=${JIRA_INFO}" >> "${GITHUB_OUTPUT}"
             fi
 
       - name: Slack notification
@@ -28,5 +35,5 @@ jobs:
           channel-id: C075SGGM4US
           payload: >-
             {
-              "text": "PR <${{ github.event.pull_request.html_url }}|${{ github.event.pull_request.title }}> (Author: ${{ github.event.pull_request.user.login }}) was added to milestone <${{ github.event.milestone.html_url }}|${{ github.event.milestone.title }}>."
+              "text": "PR <${{ github.event.pull_request.html_url }}|${{ github.event.pull_request.title }}> (Author: ${{ github.event.pull_request.user.login }}) ${{steps.context.outputs.event-action }} to milestone <${{ github.event.milestone.html_url }}|${{ github.event.milestone.title }}>.\n${{ steps.context.outputs.jira-info }}"
             }
