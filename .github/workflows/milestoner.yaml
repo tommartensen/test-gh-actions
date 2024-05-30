@@ -14,7 +14,7 @@ jobs:
             echo "PR Title: ${{ github.event.pull_request.title }}"
             echo "PR Author: ${{ github.event.pull_request.user.login }}"
 
-            ISSUE_ID="$(echo ${{ github.event.pull_request.title }} | grep --only-matching 'ROX-[0-9]\+')"
+            ISSUE_ID="$(echo ${{ github.event.pull_request.title }} | grep --only-matching 'ROX-[0-9]\+' || true)"
             if [ -z "${ISSUE_ID}" ]; then
               echo "no issue id found"
             else
