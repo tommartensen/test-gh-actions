@@ -18,6 +18,7 @@ jobs:
             else
               EVENT_ACTION="removed from"
               EVENT_ICON=":x:"
+              echo "call-to-action=:arrow_right: This is an informative message without action item." >> "${GITHUB_OUTPUT}"
             fi
 
             echo "pr-info=${EVENT_ICON} <${{ github.event.pull_request.html_url }}|${{ github.event.pull_request.title }}> (Author: ${{ github.event.pull_request.user.login }}) was ${EVENT_ACTION} milestone <${{ github.event.milestone.html_url }}|${{ github.event.milestone.title }}>." >> "${GITHUB_OUTPUT}"
