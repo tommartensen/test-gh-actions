@@ -12,10 +12,12 @@ jobs:
           PR_TITLE: ${{ github.event.pull_request.title }}
         run: |
             if [ "${{ github.event.action}}" = "milestoned" ]; then
-              echo "event-action=added to" >> "${GITHUB_OUTPUT}"
+              echo "EVENT_ACTION=added to"
             else
-              echo "event-action=removed from" >> "${GITHUB_OUTPUT}"
+              echo "EVENT_ACTION=removed from"
             fi
+
+            echo "pr-info="PR <${{ github.event.pull_request.html_url }}|${{ github.event.pull_request.title }}> (Author: ${{ github.event.pull_request.user.login }}) ${EVENT_ACTION} milestone <${{ github.event.milestone.html_url }}|${{ github.event.milestone.title }}>." >> "${GITHUB_OUTPUT}"
 
             ISSUE_ID="$(echo "${PR_TITLE}" | grep --only-matching 'ROX-[0-9]\+' || true)"
             if [ -n "${ISSUE_ID}" ]; then
@@ -32,9 +34,9 @@ jobs:
               STATUS="$(echo $JIRA_INFO | jq -r .status)"
               TYPE="$(echo $JIRA_INFO | jq -r .type)"
 
-              echo "jira-info=><https://issues.redhat.com/browse/${KEY}|${KEY} (${SUMMARY})>\n>Type: ${TYPE}\n>Assignee: ${ASSIGNEE}\n>Status: ${STATUS}\n>Priority: ${PRIORITY}" >> "${GITHUB_OUTPUT}"
+              echo "jira-info=<https://issues.redhat.com/browse/${KEY}|${KEY} (${SUMMARY})>\n>Type: `${TYPE}`\n>Assignee: `${ASSIGNEE}`\n>Status: `${STATUS}`\n>Priority: `${PRIORITY}`" >> "${GITHUB_OUTPUT}"
             else
-              echo "jira-info=>We could not determine a Jira issue for this PR."
+              echo "jira-info=We could not determine a Jira issue for this PR."
             fi
 
       - name: Slack notification
@@ -45,8 +47,16 @@ jobs:
           channel-id: C075SGGM4US
           payload: >-
             {
-              "text": "PR <${{ github.event.pull_request.html_url }}|${{ github.event.pull_request.title }}> (Author: ${{ github.event.pull_request.user.login }}) ${{steps.context.outputs.event-action }} milestone <${{ github.event.milestone.html_url }}|${{ github.event.milestone.title }}>.",
+              "text": "${{ steps.context.outputs.pr-info }}",
               "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "${{ steps.context.outputs.pr-info}}"
+                  }
+                },
+                { "type": "divider" },
                 {
                   "type": "section",
                   "text": {
