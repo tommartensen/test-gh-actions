@@ -32,9 +32,9 @@ jobs:
               STATUS="$(echo $JIRA_INFO | jq -r .status)"
               TYPE="$(echo $JIRA_INFO | jq -r .type)"
 
-              echo "jira-info=><https://issues.redhat.com/browse/${KEY}|${KEY} (${SUMMARY})>\nType: ${TYPE}\nAssignee: ${ASSIGNEE}\nStatus: ${STATUS}\nPriority: ${PRIORITY}" >> "${GITHUB_OUTPUT}"
+              echo "jira-info=><https://issues.redhat.com/browse/${KEY}|${KEY} (${SUMMARY})>\n>Type: ${TYPE}\n>Assignee: ${ASSIGNEE}\n>Status: ${STATUS}\n>Priority: ${PRIORITY}" >> "${GITHUB_OUTPUT}"
             else
-              echo "jira-info=We could not determine a Jira issue for this PR."
+              echo "jira-info=>We could not determine a Jira issue for this PR."
             fi
 
       - name: Slack notification
@@ -49,7 +49,10 @@ jobs:
               "blocks": [
                 {
                   "type": "section",
-                  "text": "${{ steps.context.outputs.jira-info}}"
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "${{ steps.context.outputs.jira-info}}"
+                  }
                 }
               ]
             }
