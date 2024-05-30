@@ -24,6 +24,7 @@ jobs:
                 --location "https://issues.redhat.com/rest/api/2/issue/${ISSUE_ID}" \
                 --header "Authorization: Bearer ${{ secrets.JIRA_TOKEN }}" \
               | jq '{ key: .key, summary: .fields.summary, priority: .fields.priority.name, assignee: .fields.assignee.displayName, status: .fields.status.name, type: .fields.issuetype.name }')
+              echo "${JIRA_INFO}"
               echo "jira-info=${JIRA_INFO}" >> "${GITHUB_OUTPUT}"
             fi
 
