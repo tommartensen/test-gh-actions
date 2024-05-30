@@ -32,7 +32,7 @@ jobs:
               STATUS="$(echo $JIRA_INFO | jq -r .status)"
               TYPE="$(echo $JIRA_INFO | jq -r .type)"
 
-              echo "jira-info=<https://issues.redhat.com/browse/${KEY}|${KEY} (${SUMMARY})> is a ${TYPE}, assigned to ${ASSIGNEE}. It is ${STATUS} and has ${PRIORITY} priority." >> "${GITHUB_OUTPUT}"
+              echo "jira-info=><https://issues.redhat.com/browse/${KEY}|${KEY} (${SUMMARY})>\nType: ${TYPE}\nAssignee: ${ASSIGNEE}\nStatus: ${STATUS}\nPriority: ${PRIORITY}" >> "${GITHUB_OUTPUT}"
             else
               echo "jira-info=We could not determine a Jira issue for this PR."
             fi
