@@ -25,3 +25,14 @@ jobs:
                 --header "Authorization: Bearer ${{ secrets.JIRA_TOKEN }}" \
               | jq -r '.key, .fields.summary, .fields.priority.name, .fields.assignee.displayName, .fields.status.name, .fields.issuetype.name'
             fi
+
+      - name: Slack notification
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+        uses: slackapi/slack-github-action@v1.25.0
+        with:
+          channel-id: C03KSV3N6N8
+          payload: >-
+            {
+              "text": "A new PR was added to milestone xyz."
+            }
