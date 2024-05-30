@@ -14,11 +14,12 @@ jobs:
             echo "PR Title: ${{ github.event.pull_request.title }}"
             echo "PR Author: ${{ github.event.pull_request.user.login }}"
 
-      - name: Find Jira issue and print information
-        # TODO: find issue key from PR title
-        run: |
-          set -uo pipefail
-          curl \
-            -sSL \
-            --location 'https://issues.redhat.com/rest/api/2/issue/ROX-24345' \
-            --header 'Authorization: Bearer ${{ secrets.JIRA_TOKEN }}' | jq -r '.key, .fields.summary, .fields.priority.name, .fields.assignee.displayName, .fields.status.name, .fields.issuetype.name'
+            ISSUE_ID="$(echo ${{ github.event.pull_request.title }} | grep --only-matching 'ROX-[0-9]\+')"
+            if [ -z "${ISSUE_ID}" ]; then
+              echo "no issue id found"
+            else
+              curl \
+                -sSL \
+                --location "https://issues.redhat.com/rest/api/2/issue/${ISSUE_ID}" \
+                --header "Authorization: Bearer ${{ secrets.JIRA_TOKEN }}" \
+              | jq -r '.key, .fields.summary, .fields.priority.name, .fields.assignee.displayName, .fields.status.name, .fields.issuetype.name'
