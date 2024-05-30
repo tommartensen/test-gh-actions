@@ -40,7 +40,7 @@ jobs:
 
               echo "jira-info=<https://issues.redhat.com/browse/${KEY}|${KEY}: ${SUMMARY}>\n>Type: \`${TYPE}\`\n>Assignee: \`${ASSIGNEE}\`\n>Status: \`${STATUS}\`\n>Priority: \`${PRIORITY}\`" >> "${GITHUB_OUTPUT}"
             else
-              echo "jira-info=We could not determine a Jira issue for this PR." >> "${GITHUB_OUTPUT}"
+              echo "jira-info=:exclamation: We could not find a Jira issue for this PR." >> "${GITHUB_OUTPUT}"
             fi
 
       - name: Slack notification
