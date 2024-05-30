@@ -13,11 +13,13 @@ jobs:
         run: |
             if [ "${{ github.event.action}}" = "milestoned" ]; then
               EVENT_ACTION="added to"
+              EVENT_ICON=":white_check_mark:"
             else
               EVENT_ACTION="removed from"
+              EVENT_ICON=":x:"
             fi
 
-            echo "pr-info=PR <${{ github.event.pull_request.html_url }}|${{ github.event.pull_request.title }}> (Author: ${{ github.event.pull_request.user.login }}) ${EVENT_ACTION} milestone <${{ github.event.milestone.html_url }}|${{ github.event.milestone.title }}>." >> "${GITHUB_OUTPUT}"
+            echo "pr-info=${EVENT_ICON}<${{ github.event.pull_request.html_url }}|${{ github.event.pull_request.title }}> (Author: ${{ github.event.pull_request.user.login }}) was ${EVENT_ACTION} milestone <${{ github.event.milestone.html_url }}|${{ github.event.milestone.title }}>." >> "${GITHUB_OUTPUT}"
 
             ISSUE_ID="$(echo "${PR_TITLE}" | grep --only-matching 'ROX-[0-9]\+' || true)"
             if [ -n "${ISSUE_ID}" ]; then
@@ -34,7 +36,7 @@ jobs:
               STATUS="$(echo "${JIRA_INFO}" | jq -r .status)"
               TYPE="$(echo "${JIRA_INFO}" | jq -r .type)"
 
-              echo "jira-info=<https://issues.redhat.com/browse/${KEY}|${KEY} (${SUMMARY})>\n>Type: \`${TYPE}\`\n>Assignee: \`${ASSIGNEE}\`\n>Status: \`${STATUS}\`\n>Priority: \`${PRIORITY}\`" >> "${GITHUB_OUTPUT}"
+              echo "jira-info=<https://issues.redhat.com/browse/${KEY}|${KEY}: ${SUMMARY}>\n>Type: \`${TYPE}\`\n>Assignee: \`${ASSIGNEE}\`\n>Status: \`${STATUS}\`\n>Priority: \`${PRIORITY}\`" >> "${GITHUB_OUTPUT}"
             else
               echo "jira-info=We could not determine a Jira issue for this PR."
             fi
@@ -54,6 +56,13 @@ jobs:
                   "text": {
                     "type": "mrkdwn",
                     "text": "${{ steps.context.outputs.pr-info}}"
+                  }
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "Release Engineers and : please review if this PR meets the criteria."
                   }
                 },
                 { "type": "divider" },
