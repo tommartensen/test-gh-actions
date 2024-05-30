@@ -8,12 +8,6 @@ jobs:
     steps:
       - name: Print context
         run: |
-            echo "Milestone: ${{ github.event.milestone.title }}"
-            echo "Milestone Link: ${{ github.event.milestone.html_url }}"
-            echo "PR: ${{ github.event.pull_request.html_url }}"
-            echo "PR Title: ${{ github.event.pull_request.title }}"
-            echo "PR Author: ${{ github.event.pull_request.user.login }}"
-
             ISSUE_ID="$(echo ${{ github.event.pull_request.title }} | grep --only-matching 'ROX-[0-9]\+' || true)"
             if [ -z "${ISSUE_ID}" ]; then
               echo "no issue id found"
@@ -31,8 +25,8 @@ jobs:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
         uses: slackapi/slack-github-action@v1.25.0
         with:
-          channel-id: C03KSV3N6N8
+          channel-id: C075SGGM4US
           payload: >-
             {
-              "text": "A new PR was added to milestone xyz."
+              "text": "PR <${{ github.event.pull_request.html_url }}|${{ github.event.pull_request.title }}> (Author: ${{ github.event.pull_request.user.login }}) was added to milestone <${{ github.event.milestone.html_url }}|${{ github.event.milestone.title }}>."
             }
