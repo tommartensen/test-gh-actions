@@ -62,7 +62,7 @@ jobs:
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "Release Engineers and : please review if this PR meets the criteria."
+                    "text": ":arrow_right: Release Engineers and <!subteam^S04TXGK6B32|acs-eng-staff>: Review if this PR meets the criteria for release candidates."
                   }
                 },
                 { "type": "divider" },
