@@ -38,8 +38,6 @@ jobs:
       #     debug: true
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.RHACS_BOT_GITHUB_TOKEN }}
 
       - name: Central login
         uses: stackrox/central-login@v1
