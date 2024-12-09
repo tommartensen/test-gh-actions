@@ -1,0 +1,73 @@
+name: Debug sarif
+on:
+  push:
+  pull_request:
+
+jobs:
+  scan-images-with-roxctl:
+    # needs:
+    #   - build-and-push-main
+    #   - build-and-push-operator
+    #   - push-main-manifests
+    name: Check images for vulnerabilities
+    runs-on: ubuntu-latest
+    permissions:
+      # Needed for stackrox/central-login to create the JWT token.
+      id-token: write
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        image:
+          [
+            "central-db",
+            "collector",
+            "collector-slim",
+            "main",
+            "roxctl",
+            "scanner",
+            "scanner-db",
+            "scanner-db-slim",
+            "scanner-slim",
+            "stackrox-operator",
+          ]
+    steps:
+      # - name: Initialize CodeQL
+      #   uses: github/codeql-action/init@v3
+      #   with:
+      #     debug: true
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.RHACS_BOT_GITHUB_TOKEN }}
+
+      - name: Central login
+        uses: stackrox/central-login@v1
+        with:
+          endpoint: ${{ vars.ACS_DOGFOODING_CENTRAL_URL }}
+          skip-tls-verify: true
+
+      - name: Install roxctl
+        uses: stackrox/roxctl-installer-action@v1
+        with:
+          central-endpoint: ${{ vars.ACS_DOGFOODING_CENTRAL_URL }}
+          central-token: ${{ env.ROX_API_TOKEN }}
+          skip-tls-verify: true
+
+      - name: Scan images for vulnerabilities
+        run: |
+          # release_tag=$(make tag)
+          # if [[ ${{ matrix.image }} =~ "operator" ]]; then
+          #   release_tag=$(make -C operator --silent tag)
+          # fi
+          release_tag=4.6.0
+          roxctl image scan --retries=10 --retry-delay=15 --force --severity=CRITICAL,IMPORTANT --output=sarif \
+            --image="quay.io/rhacs-eng/${{ matrix.image }}:${release_tag}" --insecure-skip-tls-verify \
+            > results.sarif
+          cat results.sarif >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Upload roxctl scan results to GitHub Security tab number one
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          category: ${{ matrix.image }}
+          sarif_file: results.sarif
