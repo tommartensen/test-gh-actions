@@ -16,8 +16,5 @@ jobs:
       run: |
         set -euo pipefail
         echo "I would have run this: "
-        echo "gh pr review ${{ github.event.pull_request.number }} \
-          --approve --body "Auto-approved by automation." \
-          --repo "${{ github.repository }}"
-
+        echo "gh pr review --approve"
         echo "But GH won't let me do it (as expected)."
