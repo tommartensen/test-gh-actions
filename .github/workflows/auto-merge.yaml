@@ -13,31 +13,34 @@ concurrency:
   group: auto-merge
   cancel-in-progress: false
 
+run-name: >-
+  ${{
+    format('auto-merge {0}',
+      fromJSON('[" (dry-run)", ""]')[github.event.inputs.dry-run != 'true']
+    )
+  }}
+
 jobs:
   auto-merge:
-    name: Enable auto-merge for eligible PRs
+    name: Enable auto-merge for eligible PRs (dependabot)
     runs-on: ubuntu-latest
     env:
       DRY_RUN: ${{ fromJSON('["true", "false"]')[github.event.inputs.dry-run != 'true'] }}
 
     steps:
-      - name: Dry-run
-        run: |
-          echo "DRY_RUN: ${{ env.DRY_RUN }}"
-          exit 0
-
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # ratchet:actions/checkout@v6
 
       - name: Run auto-merge action
         uses: stackrox/actions/automerge@tm/ROX-34007-automerge-configurability
         with:
+          dry-run: ${{github.event.inputs.dry-run == 'true'}}
           github-token: ${{ secrets.RHACS_BOT_GITHUB_TOKEN }}
           # This needs to be overriden for the test to work.
           repository: stackrox/stackrox
 
   auto-merge-mintmaker:
-    name: Enable auto-merge for eligible PRs
+    name: Enable auto-merge for eligible PRs (mintmaker)
     runs-on: ubuntu-latest
     env:
       DRY_RUN: ${{ fromJSON('["true", "false"]')[github.event.inputs.dry-run != 'true'] }}
@@ -49,6 +52,7 @@ jobs:
       - name: Run auto-merge action
         uses: stackrox/actions/automerge@tm/ROX-34007-automerge-configurability
         with:
+          dry-run: ${{github.event.inputs.dry-run == 'true'}}
           github-token: ${{ secrets.RHACS_BOT_GITHUB_TOKEN }}
           # This needs to be overriden for the test to work.
           repository: stackrox/stackrox
