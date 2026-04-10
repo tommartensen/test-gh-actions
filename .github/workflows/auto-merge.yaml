@@ -6,7 +6,7 @@ on:
       dry-run:
         description: Dry-run
         required: false
-        default: true
+        default: false
         type: boolean
 
 concurrency:
@@ -54,5 +54,9 @@ jobs:
         with:
           dry-run: ${{github.event.inputs.dry-run == 'true'}}
           github-token: ${{ secrets.RHACS_BOT_GITHUB_TOKEN }}
+          allowed-base-branches: 'master'
+          labels: 'konflux-build'
+          required-checks: '^(?!.*conforma)Red Hat Konflux'
+          allowed-authors: 'app/red-hat-konflux'
           # This needs to be overriden for the test to work.
           repository: stackrox/stackrox
