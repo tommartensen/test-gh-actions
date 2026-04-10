@@ -21,6 +21,11 @@ jobs:
       DRY_RUN: ${{ fromJSON('["true", "false"]')[github.event.inputs.dry-run != 'true'] }}
 
     steps:
+      - name: Dry-run
+        run: |
+          echo "DRY_RUN: ${{ env.DRY_RUN }}"
+          exit 0
+
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # ratchet:actions/checkout@v6
 
@@ -34,7 +39,6 @@ jobs:
   auto-merge-mintmaker:
     name: Enable auto-merge for eligible PRs
     runs-on: ubuntu-latest
-    if: github.repository_owner == 'stackrox'
     env:
       DRY_RUN: ${{ fromJSON('["true", "false"]')[github.event.inputs.dry-run != 'true'] }}
 
