@@ -26,7 +26,6 @@ jobs:
   auto-merge-dependabot:
     name: "Dependabot: Enable auto-merge for eligible PRs"
     runs-on: ubuntu-latest
-    if: github.repository_owner == 'stackrox'
     steps:
       - name: Debug
         run: |
