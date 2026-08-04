@@ -1,0 +1,19 @@
+name: backport-check
+
+on:
+  pull_request:
+    branches:
+      - release-*
+
+jobs:
+  check-backport:
+    name: "Check backport status"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install relacs
+        uses: stackrox/actions/release/install-relacs@v1
+
+      - name: Check backport
+        env:
+          JIRA_TOKEN: ${{ secrets.JIRA_TOKEN }}
+        run: relacs github check-backport --pull-request ${{ github.event.pull_request.html_url }}
