@@ -21,6 +21,7 @@ jobs:
         with:
           repository: stackrox/relacs
           ref: main
+          token: ${{ env.GH_TOKEN }}
 
       - name: Install relacs
         uses: stackrox/actions/release/install-relacs@v1
