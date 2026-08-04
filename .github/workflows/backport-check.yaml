@@ -10,20 +10,10 @@ jobs:
   check-backport:
     name: "Check backport status"
     runs-on: ubuntu-latest
-    env:
-      GH_TOKEN: ${{ secrets.RHACS_BOT_GITHUB_TOKEN }}
     steps:
-      - name: Whoami
-        run: gh auth status
-
-      - name: Checkout code
-        uses: actions/checkout@v7
-        with:
-          repository: stackrox/relacs
-          ref: main
-          token: ${{ env.GH_TOKEN }}
-
       - name: Install relacs
+        env:
+          GH_TOKEN: ${{ secrets.RHACS_BOT_GITHUB_TOKEN }}
         uses: stackrox/actions/release/install-relacs@v1
         with:
           token: ${{ secrets.RHACS_BOT_GITHUB_TOKEN }}
