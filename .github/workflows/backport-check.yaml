@@ -11,14 +11,6 @@ jobs:
     name: "Check backport status"
     runs-on: ubuntu-latest
     steps:
-      - name: Whoami
-        run: gh auth status
-
-      - name: Checkout code
-        uses: actions/checkout@v7
-        with:
-          repository: stackrox/relacs
-
       - name: Install relacs
         uses: stackrox/actions/release/install-relacs@v1
         with:
