@@ -16,13 +16,9 @@ jobs:
       - name: Install relacs
         uses: stackrox/actions/release/install-relacs@v1
         with:
-<<<<<<< HEAD
           token: ${{ secrets.RHACS_BOT_GITHUB_TOKEN }}
           # TODO: Remove specific version selector once a new version is released
           version: v0.0.11+rc
-=======
-          version: v0.0.11
->>>>>>> 0163671 (.)
 
       - name: Check backport
         env:
