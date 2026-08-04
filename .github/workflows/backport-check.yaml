@@ -20,6 +20,7 @@ jobs:
         uses: actions/checkout@v7
         with:
           repository: stackrox/relacs
+          ref: main
 
       - name: Install relacs
         uses: stackrox/actions/release/install-relacs@v1
