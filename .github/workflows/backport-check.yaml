@@ -10,6 +10,8 @@ jobs:
   check-backport:
     name: "Check backport status"
     runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
     steps:
       - name: Install relacs
         uses: stackrox/actions/release/install-relacs@v1
