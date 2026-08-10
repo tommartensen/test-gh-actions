@@ -26,7 +26,7 @@ jobs:
           # JIRA_USER secret contains the email address of the rhacs-bot user
           JIRA_EMAIL: ${{ secrets.JIRA_USER }}
           JIRA_TOKEN: ${{ secrets.JIRA_TOKEN }}
-          KUBECTL_PLUGIN_KA_HOST: ${{ env.ACS_KUBECTL_PLUGIN_KA_HOST }}
+          KUBECTL_PLUGIN_KA_HOST: ${{ vars.ACS_KUBECTL_PLUGIN_KA_HOST }}
         run: |
           echo "# Backport check results" >> $GITHUB_STEP_SUMMARY
           relacs github backport-check --pull-request ${{ github.event.pull_request.html_url }} >> $GITHUB_STEP_SUMMARY
