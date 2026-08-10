@@ -15,23 +15,16 @@ jobs:
         uses: stackrox/actions/release/install-relacs@v1
         with:
           token: ${{ secrets.RHACS_BOT_GITHUB_TOKEN }}
+          # TODO: Remove specific version selector once a new version is released
           version: v0.0.11+rc
 
       - name: Check backport
         env:
           GH_TOKEN: ${{ secrets.RHACS_BOT_GITHUB_TOKEN }}
-          JIRA_EMAIL: ${{ secrets.JIRA_EMAIL }}
+          # JIRA_USER secret contains the email address of the rhacs-bot user
+          JIRA_EMAIL: ${{ secrets.JIRA_USER }}
           JIRA_TOKEN: ${{ secrets.JIRA_TOKEN }}
-          KUBECTL_PLUGIN_KA_HOST: https://kubearchive-api-server-product-kubearchive.apps.stone-prd-rh01.pg1f.p1.openshiftapps.com
+          KUBECTL_PLUGIN_KA_HOST: ${{ env.ACS_KUBECTL_PLUGIN_KA_HOST }}
         run: |
           echo "# Backport check results" >> $GITHUB_STEP_SUMMARY
           relacs github backport-check --pull-request ${{ github.event.pull_request.html_url }} >> $GITHUB_STEP_SUMMARY
-
-  check-merge-window:
-    name: "Check merge window"
-    runs-on: ubuntu-latest
-    steps:
-      - name: Hello world
-        run: |
-          echo "Merge window not implemented"
-          exit 1
