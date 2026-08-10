@@ -1,7 +1,7 @@
 name: backport-check
 
 on:
-  pull_request:
+  pull_request_target:
     types: [opened, synchronize, reopened, edited]
     branches:
       - release-*
@@ -12,6 +12,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Install relacs
+        env:
+          GH_TOKEN: ${{ secrets.RHACS_BOT_GITHUB_TOKEN }}
         uses: stackrox/actions/release/install-relacs@v1
         with:
           token: ${{ secrets.RHACS_BOT_GITHUB_TOKEN }}
@@ -24,7 +26,7 @@ jobs:
           # JIRA_USER secret contains the email address of the rhacs-bot user
           JIRA_EMAIL: ${{ secrets.JIRA_USER }}
           JIRA_TOKEN: ${{ secrets.JIRA_TOKEN }}
-          KUBECTL_PLUGIN_KA_HOST: ${{ env.ACS_KUBECTL_PLUGIN_KA_HOST }}
+          KUBECTL_PLUGIN_KA_HOST: ${{ vars.ACS_KUBECTL_PLUGIN_KA_HOST }}
         run: |
           echo "# Backport check results" >> $GITHUB_STEP_SUMMARY
           relacs github backport-check --pull-request ${{ github.event.pull_request.html_url }} >> $GITHUB_STEP_SUMMARY
