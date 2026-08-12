@@ -31,4 +31,6 @@ jobs:
           GH_TOKEN: ${{ secrets.RHACS_BOT_GITHUB_TOKEN }}
           KUBECTL_PLUGIN_KA_HOST: ${{ vars.ACS_KUBECTL_PLUGIN_KA_HOST }}
         run: |
+          oc login --token="${{ secrets.KONFLUX_BOT_0_TOKEN }}" --server=https://api.stone-prd-rh01.pg1f.p1.openshiftapps.com:6443
+          oc project rh-acs-tenant
           relacs github list-merge-windows --org ${{ github.repository_owner }} --repo ${{ github.repository }} >> "${GITHUB_STEP_SUMMARY}"
