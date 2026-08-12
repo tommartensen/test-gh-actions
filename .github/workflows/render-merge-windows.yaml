@@ -1,0 +1,15 @@
+name: Render merge windows
+
+on:
+  push:
+    branches:
+      - main
+      - tm/render-merge-windows
+
+jobs:
+  render-merge-windows:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Render merge windows
+        run: |
+          echo "Rendering merge windows"
