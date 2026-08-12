@@ -19,11 +19,8 @@ jobs:
           # TODO: Remove specific version selector once a new version is released
           version: v0.0.11+merge-windows
 
-      - name: Install kubectl and KubeArchive plugin
+      - name: Install KubeArchive kubectl plugin
         run: |
-          curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-          chmod +x kubectl
-          mv kubectl /usr/local/bin/
           curl -sSfLO https://github.com/kubearchive/kubearchive/releases/latest/download/kubectl-ka-linux-amd64
           chmod +x kubectl-ka-linux-amd64
           mv kubectl-ka-linux-amd64 /usr/local/bin/kubectl-ka
