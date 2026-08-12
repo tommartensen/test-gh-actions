@@ -40,5 +40,8 @@ jobs:
           # TODO: use proper SA token, blocked by: https://redhat.atlassian.net/browse/KFLUXSPRT-8705
           oc login --token="${{ secrets.KONFLUX_BOT_0_TOKEN }}" --server=https://api.stone-prd-rh01.pg1f.p1.openshiftapps.com:6443
           oc project rh-acs-tenant
-          echo "Rendering merge windows for ${{ github.repository_owner }}/${{ github.repository }}..." >> "${GITHUB_STEP_SUMMARY}"
-          relacs github list-merge-windows --org ${{ github.repository_owner }} --repo ${{ github.repository }} >> "${GITHUB_STEP_SUMMARY}"
+          # Split repository name into owner and name
+          REPO_OWNER=$(echo ${{ github.repository }} | cut -d '/' -f 1)
+          REPO_NAME=$(echo ${{ github.repository }} | cut -d '/' -f 2)
+          echo "Rendering merge windows for $REPO_OWNER/$REPO_NAME..." >> "${GITHUB_STEP_SUMMARY}"
+          relacs github list-merge-windows --org $REPO_OWNER --repo $REPO_NAME >> "${GITHUB_STEP_SUMMARY}"
