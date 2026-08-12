@@ -22,7 +22,7 @@ jobs:
       - name: Install oc CLI and KubeArchive kubectl plugin
         run: |
           # Install OC CLI
-          curl -LO "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/openshift-client-linux.tar.gz"
+          curl -sSfLO "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/openshift-client-linux.tar.gz"
           tar -xzf openshift-client-linux.tar.gz
           mv oc /usr/local/bin/
 
@@ -38,9 +38,9 @@ jobs:
           KUBECTL_PLUGIN_KA_HOST: ${{ vars.ACS_KUBECTL_PLUGIN_KA_HOST }}
         run: |
           # TODO: use proper SA token, blocked by: https://redhat.atlassian.net/browse/KFLUXSPRT-8705
-          oc login --token="${{ secrets.KONFLUX_BOT_0_TOKEN }}" --server=https://api.stone-prd-rh01.pg1f.p1.openshiftapps.com:6443
+          oc login --token="${{ secrets.KONFLUX_BOT_0_TOKEN }}" --server=https://api.stone-prd-rh01.pg1f.p1.openshiftapps.com:6443 > /dev/null
           # Split repository name into owner and name
           REPO_OWNER=$(echo ${{ github.repository }} | cut -d '/' -f 1)
           REPO_NAME=$(echo ${{ github.repository }} | cut -d '/' -f 2)
-          echo "Rendering merge windows for $REPO_OWNER/$REPO_NAME..." >> "${GITHUB_STEP_SUMMARY}"
+          echo "Rendering merge windows for $REPO_OWNER/$REPO_NAME..."
           relacs github list-merge-windows --org $REPO_OWNER --repo $REPO_NAME >> "${GITHUB_STEP_SUMMARY}"
