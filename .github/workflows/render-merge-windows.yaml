@@ -21,6 +21,12 @@ jobs:
 
       - name: Install KubeArchive kubectl plugin
         run: |
+          # Install OC CLI
+          curl -LO "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/openshift-client-linux.tar.gz"
+          tar -xzf openshift-client-linux.tar.gz
+          mv oc /usr/local/bin/
+
+          # Install KubeArchive kubectl plugin
           curl -sSfLO https://github.com/kubearchive/kubearchive/releases/latest/download/kubectl-ka-linux-amd64
           chmod +x kubectl-ka-linux-amd64
           mv kubectl-ka-linux-amd64 /usr/local/bin/kubectl-ka
@@ -31,6 +37,7 @@ jobs:
           GH_TOKEN: ${{ secrets.RHACS_BOT_GITHUB_TOKEN }}
           KUBECTL_PLUGIN_KA_HOST: ${{ vars.ACS_KUBECTL_PLUGIN_KA_HOST }}
         run: |
+          # TODO: use proper SA token, blocked by: https://redhat.atlassian.net/browse/KFLUXSPRT-8705
           oc login --token="${{ secrets.KONFLUX_BOT_0_TOKEN }}" --server=https://api.stone-prd-rh01.pg1f.p1.openshiftapps.com:6443
           oc project rh-acs-tenant
           relacs github list-merge-windows --org ${{ github.repository_owner }} --repo ${{ github.repository }} >> "${GITHUB_STEP_SUMMARY}"
