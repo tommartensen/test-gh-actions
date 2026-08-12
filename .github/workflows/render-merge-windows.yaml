@@ -19,7 +19,7 @@ jobs:
           # TODO: Remove specific version selector once a new version is released
           version: v0.0.11+merge-windows
 
-      - name: Install KubeArchive kubectl plugin
+      - name: Install oc CLI and KubeArchive kubectl plugin
         run: |
           # Install OC CLI
           curl -LO "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/openshift-client-linux.tar.gz"
@@ -40,4 +40,5 @@ jobs:
           # TODO: use proper SA token, blocked by: https://redhat.atlassian.net/browse/KFLUXSPRT-8705
           oc login --token="${{ secrets.KONFLUX_BOT_0_TOKEN }}" --server=https://api.stone-prd-rh01.pg1f.p1.openshiftapps.com:6443
           oc project rh-acs-tenant
+          echo "Rendering merge windows for ${{ github.repository_owner }}/${{ github.repository }}..." >> "${GITHUB_STEP_SUMMARY}"
           relacs github list-merge-windows --org ${{ github.repository_owner }} --repo ${{ github.repository }} >> "${GITHUB_STEP_SUMMARY}"
