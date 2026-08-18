@@ -20,4 +20,4 @@ jobs:
       - name: Re-run backport-check workflows
         env:
           GH_TOKEN: ${{ secrets.RHACS_BOT_GITHUB_TOKEN }}
-        run: python3 .github/scripts/rerun-backport-checks.py
+        run: python3 .github/workflows/scripts/rerun-backport-checks.py
