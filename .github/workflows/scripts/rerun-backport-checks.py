@@ -24,17 +24,22 @@ def run_gh(*args: str) -> str:
 
 def list_release_prs() -> list[dict]:
     raw = run_gh(
-        "pr",
-        "list",
-        "--state",
-        "open",
-        "--limit",
-        "1000",
-        "--json",
-        "number,url,baseRefName,headRefName,headRefOid",
+        "api",
+        "repos/:owner/:repo/pulls?state=open&per_page=100",
+        "--paginate",
     )
     prs = json.loads(raw)
-    return [pr for pr in prs if pr["baseRefName"].startswith("release-")]
+    return [
+        {
+            "number": pr["number"],
+            "url": pr["html_url"],
+            "baseRefName": pr["base"]["ref"],
+            "headRefName": pr["head"]["ref"],
+            "headRefOid": pr["head"]["sha"],
+        }
+        for pr in prs
+        if pr["base"]["ref"].startswith("release-")
+    ]
 
 
 def latest_backport_run(head_sha: str) -> dict | None:
