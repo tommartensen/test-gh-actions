@@ -11,9 +11,24 @@ jobs:
     name: "Check backport status"
     runs-on: ubuntu-latest
     steps:
-      - name: Install relacs
+      - name: Get latest relacs version
+        id: relacs-version
         env:
           GH_TOKEN: ${{ secrets.RHACS_BOT_GITHUB_TOKEN }}
+        run: |
+          LATEST_VERSION=$(gh release view --repo stackrox/relacs --json tagName --jq .tagName)
+          echo "version=${LATEST_VERSION}" >> $GITHUB_OUTPUT
+          echo "Latest relacs version: ${LATEST_VERSION}"
+
+      - name: Cache relacs CLI
+        id: cache-relacs
+        uses: actions/cache@v6
+        with:
+          path: ~/.local/bin/relacs
+          key: relacs-${{ steps.relacs-version.outputs.version }}
+
+      - name: Install relacs
+        if: steps.cache-relacs.outputs.cache-hit != 'true'
         uses: stackrox/actions/release/install-relacs@e57126d0ed98ef43306e38a199f230c3d9afbcfd # ratchet:stackrox/actions/release/install-relacs@v1
         with:
           token: ${{ secrets.RHACS_BOT_GITHUB_TOKEN }}
@@ -25,6 +40,7 @@ jobs:
           JIRA_EMAIL: ${{ secrets.JIRA_USER }}
           JIRA_TOKEN: ${{ secrets.JIRA_TOKEN }}
           KUBECTL_PLUGIN_KA_HOST: ${{ vars.ACS_KUBECTL_PLUGIN_KA_HOST }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
         run: |
-          echo "# Backport check results" >> "${GITHUB_STEP_SUMMARY}"
-          relacs github backport-check --pull-request ${{ github.event.pull_request.html_url }} >> "${GITHUB_STEP_SUMMARY}"
+          echo "# Backport check results" | tee -a "${GITHUB_STEP_SUMMARY}"
+          relacs github backport-check --pull-request "${PR_URL}" | tee -a "${GITHUB_STEP_SUMMARY}"
