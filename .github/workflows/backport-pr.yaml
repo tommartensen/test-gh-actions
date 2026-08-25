@@ -41,5 +41,5 @@ jobs:
           # Parse the JSON object and extract PR numbers
           for pr_number in $(echo "${CREATED_PRS}" | jq -r '.[]'); do
             echo "Assigning PR #${pr_number} to ${ORIGINAL_AUTHOR}"
-            gh pr edit "${pr_number}" --add-assignee "${ORIGINAL_AUTHOR}"
+            gh pr edit "${pr_number}" --add-assignee "${ORIGINAL_AUTHOR}" --repo "${{ github.repository }}"
           done
