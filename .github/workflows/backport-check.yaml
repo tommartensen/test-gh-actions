@@ -26,5 +26,6 @@ jobs:
           KUBECTL_PLUGIN_KA_HOST: ${{ vars.ACS_KUBECTL_PLUGIN_KA_HOST }}
           PR_URL: ${{ github.event.pull_request.html_url }}
         run: |
+          set -uo pipefail
           echo "# Backport check results" | tee -a "${GITHUB_STEP_SUMMARY}"
           relacs github backport-check --pull-request "${PR_URL}" | tee -a "${GITHUB_STEP_SUMMARY}"
