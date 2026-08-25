@@ -11,27 +11,11 @@ jobs:
     name: "Check backport status"
     runs-on: ubuntu-latest
     steps:
-      - name: Get latest relacs version
-        id: relacs-version
-        env:
-          GH_TOKEN: ${{ secrets.RHACS_BOT_GITHUB_TOKEN }}
-        run: |
-          LATEST_VERSION=$(gh release view --repo stackrox/relacs --json tagName --jq .tagName)
-          echo "version=${LATEST_VERSION}" >> $GITHUB_OUTPUT
-          echo "Latest relacs version: ${LATEST_VERSION}"
-
-      - name: Cache relacs CLI
-        id: cache-relacs
-        uses: actions/cache@v6
-        with:
-          path: ~/.local/bin/relacs
-          key: relacs-${{ steps.relacs-version.outputs.version }}
-
       - name: Install relacs
-        if: steps.cache-relacs.outputs.cache-hit != 'true'
         uses: stackrox/actions/release/install-relacs@e57126d0ed98ef43306e38a199f230c3d9afbcfd # ratchet:stackrox/actions/release/install-relacs@v1
         with:
           token: ${{ secrets.RHACS_BOT_GITHUB_TOKEN }}
+          version: v0.0.13+backport-check
 
       - name: Check backport
         env:
