@@ -25,10 +25,13 @@ def run_gh(*args: str) -> str:
 def list_release_prs() -> list[dict]:
     raw = run_gh(
         "api",
-        "repos/:owner/:repo/pulls?state=open&per_page=100",
+        "repos/{owner}/{repo}/pulls?state=open&per_page=100",
         "--paginate",
+        "--slurp",
     )
-    prs = json.loads(raw)
+    # Flatten paginated results (--slurp wraps pages in an outer array)
+    pages = json.loads(raw)
+    prs = [pr for page in pages for pr in page]
     return [
         {
             "number": pr["number"],
@@ -42,23 +45,24 @@ def list_release_prs() -> list[dict]:
     ]
 
 
-def latest_backport_run(head_sha: str) -> dict | None:
+def latest_backport_run(pr_number: int) -> dict | None:
+    # For pull_request_target workflows, the run SHA comes from the base branch,
+    # not the PR head, so we must match by PR number instead of commit SHA
+    # Use the API directly to get pull_requests field
     raw = run_gh(
-        "run",
-        "list",
-        "--workflow",
-        WORKFLOW_FILE,
-        "--commit",
-        head_sha,
-        "--limit",
-        "1",
-        "--json",
-        "databaseId,status",
+        "api",
+        f"repos/{{owner}}/{{repo}}/actions/workflows/{WORKFLOW_FILE}/runs?per_page=20",
+        "--paginate",
+        "--slurp",
     )
-    runs = json.loads(raw)
-    if not runs:
-        return None
-    return runs[0]
+    pages = json.loads(raw)
+    for page in pages:
+        for run in page.get("workflow_runs", []):
+            # Match runs associated with this PR number
+            pull_requests = run.get("pull_requests", [])
+            if any(pr["number"] == pr_number for pr in pull_requests):
+                return {"databaseId": run["id"], "status": run["status"]}
+    return None
 
 
 def rerun_workflow(run_id: int) -> None:
@@ -77,13 +81,12 @@ def main() -> int:
     for pr in prs:
         number = pr["number"]
         base = pr["baseRefName"]
-        head_sha = pr["headRefOid"]
         url = pr["url"]
 
-        run = latest_backport_run(head_sha)
+        run = latest_backport_run(number)
         if run is None:
             failures.append(
-                f"PR #{number} ({url}): no check-release-pr run found for {head_sha[:12]}"
+                f"PR #{number} ({url}): no check-release-pr run found"
             )
             continue
 
