@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Find open PRs targeting release-* branches and re-run backport-check for each."""
+"""Find open PRs targeting release-* branches and re-run check-release-pr for each."""
 
 from __future__ import annotations
 
@@ -9,7 +9,7 @@ import sys
 from collections import Counter
 
 
-WORKFLOW_FILE = "backport-check.yaml"
+WORKFLOW_FILE = "check-release-pr.yaml"
 
 
 def run_gh(*args: str) -> str:
@@ -83,14 +83,14 @@ def main() -> int:
         run = latest_backport_run(head_sha)
         if run is None:
             failures.append(
-                f"PR #{number} ({url}): no backport-check run found for {head_sha[:12]}"
+                f"PR #{number} ({url}): no check-release-pr run found for {head_sha[:12]}"
             )
             continue
 
         run_id = run["databaseId"]
         if run["status"] in {"queued", "in_progress", "waiting", "requested", "pending"}:
             print(
-                f"Skipping PR #{number} → {base}: backport-check run {run_id} "
+                f"Skipping PR #{number} → {base}: check-release-pr run {run_id} "
                 f"is already {run['status']}"
             )
             continue
@@ -103,10 +103,10 @@ def main() -> int:
             continue
 
         counts[base] += 1
-        print(f"Re-triggered backport-check for PR #{number} → {base} (run {run_id})")
+        print(f"Re-triggered check-release-pr for PR #{number} → {base} (run {run_id})")
 
     print()
-    print("Successfully re-triggered backport-check:")
+    print("Successfully re-triggered check-release-pr:")
     if counts:
         for base in sorted(counts):
             print(f"  {base}: {counts[base]} PR(s)")
