@@ -1,4 +1,4 @@
-name: Periodically re-run backport-check on release-* PRs
+name: Periodically re-run release-pr-check on release-* PRs
 
 on:
   schedule:
@@ -8,13 +8,13 @@ on:
 
 jobs:
   rerun:
-    name: Re-run backport-check on release-* PRs
+    name: Re-run release-pr-check on release-* PRs
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # ratchet:actions/checkout@v7
 
-      - name: Re-run backport-check workflows
+      - name: Re-run release-pr-check workflows
         env:
           GH_TOKEN: ${{ secrets.RHACS_BOT_GITHUB_TOKEN }}
-        run: .github/workflows/scripts/rerun-backport-checks.py
+        run: .github/workflows/scripts/rerun-release-pr-checks.py

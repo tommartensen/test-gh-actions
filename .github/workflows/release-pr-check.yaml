@@ -1,4 +1,4 @@
-name: Check backport
+name: Check PR to release-* branch
 
 on:
   pull_request_target:
@@ -7,8 +7,8 @@ on:
       - release-*
 
 jobs:
-  check-backport:
-    name: "Check backport status"
+  check-release-pr:
+    name: "Check release PR status"
     runs-on: ubuntu-latest
     steps:
       - name: Install relacs
@@ -17,7 +17,7 @@ jobs:
           token: ${{ secrets.RHACS_BOT_GITHUB_TOKEN }}
           version: v0.0.13+backport-check
 
-      - name: Check backport
+      - name: Check release PR
         env:
           GH_TOKEN: ${{ secrets.RHACS_BOT_GITHUB_TOKEN }}
           # JIRA_USER secret contains the email address of the rhacs-bot user
@@ -26,6 +26,5 @@ jobs:
           KUBECTL_PLUGIN_KA_HOST: ${{ vars.ACS_KUBECTL_PLUGIN_KA_HOST }}
           PR_URL: ${{ github.event.pull_request.html_url }}
         run: |
-          set -uo pipefail
-          echo "# Backport check results" | tee -a "${GITHUB_STEP_SUMMARY}"
-          relacs github backport-check --pull-request "${PR_URL}" | tee -a "${GITHUB_STEP_SUMMARY}"
+          echo "# Release PR check results" | tee -a "${GITHUB_STEP_SUMMARY}"
+          relacs github release-pr-check --pull-request "${PR_URL}" | tee -a "${GITHUB_STEP_SUMMARY}"
