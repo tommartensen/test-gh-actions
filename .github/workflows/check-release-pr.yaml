@@ -1,21 +1,54 @@
 name: Check PR to release-* branch
 
 on:
-  pull_request_target:
+  pull_request:
     types: [opened, synchronize, reopened, edited]
     branches:
       - release-*
+
+permissions: {}
 
 jobs:
   check-release-pr:
     name: "Check release PR status"
     runs-on: ubuntu-latest
     steps:
+      - name: Fail if fork PR
+        if: github.event.pull_request.head.repo.full_name != github.repository
+        run: |
+          echo "::error::PRs to release branches cannot be forks. Contact @stackrox/release-mgmt for help."
+          exit 1
+
+      # Detect latest relacs version for cache key
+      # TODO: Remove hardcoded version after testing - use actual latest from API
+      - name: Get latest relacs version
+        id: relacs-version
+        env:
+          GH_TOKEN: ${{ secrets.RHACS_BOT_GITHUB_TOKEN }}
+        run: |
+          ACTUAL_LATEST="$(gh release view --repo stackrox/relacs --json tagName --jq .tagName)"
+          echo "Actual latest version: ${ACTUAL_LATEST}"
+          VERSION="v0.0.13+backport-check"
+          echo "Using hardcoded version for testing: ${VERSION}"
+          echo "version=${VERSION}" >> "${GITHUB_OUTPUT}"
+
+      # Cache relacs binary to avoid re-downloading the same version repeatedly
+      - name: Cache relacs binary
+        id: cache-relacs
+        uses: actions/cache@v4
+        with:
+          path: ~/.local/bin/relacs
+          key: relacs-${{ runner.os }}-${{ runner.arch }}-${{ steps.relacs-version.outputs.version }}
+          restore-keys: |
+            relacs-${{ runner.os }}-${{ runner.arch }}-
+
+      # Only install if cache missed
       - name: Install relacs
+        if: steps.cache-relacs.outputs.cache-hit != 'true'
         uses: stackrox/actions/release/install-relacs@e57126d0ed98ef43306e38a199f230c3d9afbcfd # ratchet:stackrox/actions/release/install-relacs@v1
         with:
           token: ${{ secrets.RHACS_BOT_GITHUB_TOKEN }}
-          version: v0.0.13+backport-check
+          version: ${{ steps.relacs-version.outputs.version }}
 
       - name: Check release PR
         env:

@@ -45,24 +45,40 @@ def list_release_prs() -> list[dict]:
     ]
 
 
-def latest_backport_run(pr_number: int) -> dict | None:
-    # For pull_request_target workflows, the run SHA comes from the base branch,
-    # not the PR head, so we must match by PR number instead of commit SHA
-    # Use the API directly to get pull_requests field
+def get_workflow_runs_by_pr() -> dict[int, dict]:
+    """Fetch all workflow runs once and index them by PR number.
+
+    Returns a dict mapping PR number to the latest run for that PR.
+    The API returns runs sorted newest-first, so the first match for each PR is the latest.
+    """
     raw = run_gh(
         "api",
-        f"repos/{{owner}}/{{repo}}/actions/workflows/{WORKFLOW_FILE}/runs?per_page=20",
+        f"repos/{{owner}}/{{repo}}/actions/workflows/{WORKFLOW_FILE}/runs?per_page=100",
         "--paginate",
         "--slurp",
     )
     pages = json.loads(raw)
+
+    # Build index: PR number -> latest run
+    runs_by_pr: dict[int, dict] = {}
     for page in pages:
         for run in page.get("workflow_runs", []):
-            # Match runs associated with this PR number
             pull_requests = run.get("pull_requests", [])
-            if any(pr["number"] == pr_number for pr in pull_requests):
-                return {"databaseId": run["id"], "status": run["status"]}
-    return None
+            for pr in pull_requests:
+                pr_number = pr["number"]
+                # Only store the first (newest) run for each PR
+                if pr_number not in runs_by_pr:
+                    runs_by_pr[pr_number] = {
+                        "databaseId": run["id"],
+                        "status": run["status"],
+                    }
+
+    return runs_by_pr
+
+
+# Look up the latest workflow run for a PR number from the pre-built index.
+def latest_check_release_pr_run(pr_number: int, runs_by_pr: dict[int, dict]) -> dict | None:
+    return runs_by_pr.get(pr_number)
 
 
 def rerun_workflow(run_id: int) -> None:
@@ -75,6 +91,11 @@ def main() -> int:
         print("No open PRs targeting release-* branches found.")
         return 0
 
+    # Fetch workflow runs once and index by PR number (performance optimization)
+    print(f"Fetching workflow runs for {len(prs)} PRs...")
+    runs_by_pr = get_workflow_runs_by_pr()
+    print(f"Found workflow runs for {len(runs_by_pr)} PRs")
+
     counts: Counter[str] = Counter()
     failures: list[str] = []
 
@@ -83,7 +104,7 @@ def main() -> int:
         base = pr["baseRefName"]
         url = pr["url"]
 
-        run = latest_backport_run(number)
+        run = latest_check_release_pr_run(number, runs_by_pr)
         if run is None:
             failures.append(
                 f"PR #{number} ({url}): no check-release-pr run found"
