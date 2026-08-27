@@ -32,10 +32,10 @@ jobs:
           echo "Using hardcoded version for testing: ${VERSION}"
           echo "version=${VERSION}" >> "${GITHUB_OUTPUT}"
 
-      # Cache relacs binary to avoid re-downloading the same version repeatedly
-      - name: Cache relacs binary
+      # Restore relacs binary from cache to avoid re-downloading the same version
+      - name: Restore relacs binary from cache
         id: cache-relacs
-        uses: actions/cache@v4
+        uses: actions/cache/restore@v6
         with:
           path: ~/.local/bin/relacs
           key: relacs-${{ runner.os }}-${{ runner.arch }}-${{ steps.relacs-version.outputs.version }}
@@ -49,6 +49,14 @@ jobs:
         with:
           token: ${{ secrets.RHACS_BOT_GITHUB_TOKEN }}
           version: ${{ steps.relacs-version.outputs.version }}
+
+      # Save cache even if later steps fail (since relacs install succeeded)
+      - name: Save relacs binary to cache
+        if: always() && steps.cache-relacs.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v6
+        with:
+          path: ~/.local/bin/relacs
+          key: relacs-${{ runner.os }}-${{ runner.arch }}-${{ steps.relacs-version.outputs.version }}
 
       - name: Check release PR
         env:
