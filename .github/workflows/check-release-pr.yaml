@@ -6,59 +6,63 @@ on:
     branches:
       - release-*
 
+defaults:
+  run:
+    shell: bash
+
 permissions: {}
 
 jobs:
   check-release-pr:
-    name: "Check release PR status"
     runs-on: ubuntu-latest
     steps:
       - name: Fail if fork PR
         if: github.event.pull_request.head.repo.full_name != github.repository
         run: |
-          echo "::error::PRs to release branches cannot be forks. Contact @stackrox/release-mgmt for help."
+          echo "::error::PRs to release branches cannot be forks. Tag @stackrox/release-mgmt on your PR to get help."
           exit 1
 
-      # Detect latest relacs version for cache key
-      # TODO: Remove hardcoded version after testing - use actual latest from API
-      - name: Get latest relacs version
+      # Detect desired or latest relacs version
+      - name: Get desired relacs version
         id: relacs-version
         env:
           GH_TOKEN: ${{ secrets.RHACS_BOT_GITHUB_TOKEN }}
+          VERSION: "v0.0.13+backport-check"
         run: |
-          ACTUAL_LATEST="$(gh release view --repo stackrox/relacs --json tagName --jq .tagName)"
-          echo "Actual latest version: ${ACTUAL_LATEST}"
-          VERSION="v0.0.13+backport-check"
-          echo "Using hardcoded version for testing: ${VERSION}"
+          if [ -n "${VERSION:-}" ]; then
+            echo "Using version override: ${VERSION}"
+          else
+            VERSION=$(gh release view --repo stackrox/relacs --json tagName --jq .tagName)
+            echo "Using actual latest version: ${VERSION}"
+          fi
           echo "version=${VERSION}" >> "${GITHUB_OUTPUT}"
 
       # Restore relacs binary from cache to avoid re-downloading the same version
       - name: Restore relacs binary from cache
-        id: cache-relacs
-        uses: actions/cache/restore@v6
+        id: get-relacs-from-cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # ratchet:actions/cache/restore@v6
         with:
           path: ~/.local/bin/relacs
           key: relacs-${{ runner.os }}-${{ runner.arch }}-${{ steps.relacs-version.outputs.version }}
-          restore-keys: |
-            relacs-${{ runner.os }}-${{ runner.arch }}-
 
       # Only install if cache missed
       - name: Install relacs
-        if: steps.cache-relacs.outputs.cache-hit != 'true'
+        id: install-relacs
+        if: steps.get-relacs-from-cache.outputs.cache-hit != 'true'
         uses: stackrox/actions/release/install-relacs@e57126d0ed98ef43306e38a199f230c3d9afbcfd # ratchet:stackrox/actions/release/install-relacs@v1
         with:
           token: ${{ secrets.RHACS_BOT_GITHUB_TOKEN }}
           version: ${{ steps.relacs-version.outputs.version }}
 
-      # Save cache even if later steps fail (since relacs install succeeded)
+      # Save cache only if install succeeded (prevents caching wrong version on install failure)
       - name: Save relacs binary to cache
-        if: always() && steps.cache-relacs.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v6
+        if: always() && steps.get-relacs-from-cache.outputs.cache-hit != 'true' && steps.install-relacs.outcome == 'success'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # ratchet:actions/cache/save@v6
         with:
           path: ~/.local/bin/relacs
           key: relacs-${{ runner.os }}-${{ runner.arch }}-${{ steps.relacs-version.outputs.version }}
 
-      - name: Check release PR
+      - name: Check release branch PR
         env:
           GH_TOKEN: ${{ secrets.RHACS_BOT_GITHUB_TOKEN }}
           # JIRA_USER secret contains the email address of the rhacs-bot user
@@ -68,5 +72,5 @@ jobs:
           PR_URL: ${{ github.event.pull_request.html_url }}
         run: |
           set -uo pipefail
-          echo "# Release PR check results" | tee -a "${GITHUB_STEP_SUMMARY}"
+          echo "# Release branch PR check results" | tee -a "${GITHUB_STEP_SUMMARY}"
           relacs github check-release-pr --pull-request "${PR_URL}" | tee -a "${GITHUB_STEP_SUMMARY}"

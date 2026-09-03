@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 """Find open PRs targeting release-* branches and re-run check-release-pr for each."""
 
-from __future__ import annotations
-
 import json
 import subprocess
 import sys
@@ -23,62 +21,135 @@ def run_gh(*args: str) -> str:
 
 
 def list_release_prs() -> list[dict]:
-    raw = run_gh(
-        "api",
-        "repos/{owner}/{repo}/pulls?state=open&per_page=100",
-        "--paginate",
-        "--slurp",
-    )
-    # Flatten paginated results (--slurp wraps pages in an outer array)
-    pages = json.loads(raw)
-    prs = [pr for page in pages for pr in page]
-    return [
-        {
-            "number": pr["number"],
-            "url": pr["html_url"],
-            "baseRefName": pr["base"]["ref"],
-            "headRefName": pr["head"]["ref"],
-            "headRefOid": pr["head"]["sha"],
+    query = """
+    query($owner: String!, $repo: String!, $cursor: String) {
+      repository(owner: $owner, name: $repo) {
+        pullRequests(first: 100, states: OPEN, after: $cursor) {
+          pageInfo {
+            hasNextPage
+            endCursor
+          }
+          nodes {
+            number
+            url
+            baseRefName
+            headRefName
+            headRefOid
+            isCrossRepository
+          }
         }
-        for pr in prs
-        if pr["base"]["ref"].startswith("release-")
-    ]
-
-
-def get_workflow_runs_by_pr() -> dict[int, dict]:
-    """Fetch all workflow runs once and index them by PR number.
-
-    Returns a dict mapping PR number to the latest run for that PR.
-    The API returns runs sorted newest-first, so the first match for each PR is the latest.
+      }
+    }
     """
-    raw = run_gh(
-        "api",
-        f"repos/{{owner}}/{{repo}}/actions/workflows/{WORKFLOW_FILE}/runs?per_page=100",
-        "--paginate",
-        "--slurp",
-    )
-    pages = json.loads(raw)
 
-    # Build index: PR number -> latest run
-    runs_by_pr: dict[int, dict] = {}
-    for page in pages:
-        for run in page.get("workflow_runs", []):
-            pull_requests = run.get("pull_requests", [])
-            for pr in pull_requests:
-                pr_number = pr["number"]
-                # Only store the first (newest) run for each PR
-                if pr_number not in runs_by_pr:
-                    runs_by_pr[pr_number] = {
-                        "databaseId": run["id"],
-                        "status": run["status"],
+    owner, repo = run_gh("repo", "view", "--json", "owner,name", "-q", ".owner.login + \" \" + .name").split()
+
+    prs = []
+    cursor = None
+
+    while True:
+        args = ["api", "graphql", "-f", f"query={query}", "-F", f"owner={owner}", "-F", f"repo={repo}"]
+        if cursor:
+            args.extend(["-F", f"cursor={cursor}"])
+
+        raw = run_gh(*args)
+        data = json.loads(raw)
+
+        pull_requests = data["data"]["repository"]["pullRequests"]
+        prs.extend(
+            {
+                "number": pr["number"],
+                "url": pr["url"],
+                "baseRefName": pr["baseRefName"],
+                "headRefName": pr["headRefName"],
+                "headRefOid": pr["headRefOid"],
+            }
+            for pr in pull_requests["nodes"]
+            if pr["baseRefName"].startswith("release-") and not pr["isCrossRepository"]
+        )
+
+        if not pull_requests["pageInfo"]["hasNextPage"]:
+            break
+        cursor = pull_requests["pageInfo"]["endCursor"]
+
+    return prs
+
+
+def latest_check_release_pr_run(pr_number: int, owner: str, repo: str) -> dict | None:
+    """Fetch the latest workflow run for a specific PR using GraphQL.
+
+    This queries for the single most recent workflow run for the PR,
+    avoiding the ever-growing data issue of fetching all runs in batch.
+    """
+    query = """
+    query($owner: String!, $repo: String!, $pr_number: Int!) {
+      repository(owner: $owner, name: $repo) {
+        pullRequest(number: $pr_number) {
+          commits(last: 1) {
+            nodes {
+              commit {
+                checkSuites(first: 10) {
+                  nodes {
+                    status
+                    conclusion
+                    workflowRun {
+                      databaseId
+                      workflow {
+                        name
+                      }
                     }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    """
 
-    return runs_by_pr
+    try:
+        raw = run_gh(
+            "api", "graphql",
+            "-f", f"query={query}",
+            "-F", f"owner={owner}",
+            "-F", f"repo={repo}",
+            "-F", f"pr_number={pr_number}",
+        )
+        data = json.loads(raw)
 
+        # Navigate through the GraphQL response
+        pr_data = data.get("data", {}).get("repository", {}).get("pullRequest")
+        if not pr_data:
+            return None
 
-# Look up the latest workflow run for a PR number from the pre-built index.
-def latest_check_release_pr_run(pr_number: int, runs_by_pr: dict[int, dict]) -> dict | None:
-    return runs_by_pr.get(pr_number)
+        commits = pr_data.get("commits", {}).get("nodes", [])
+        if not commits:
+            return None
+
+        check_suites = commits[0].get("commit", {}).get("checkSuites", {}).get("nodes", [])
+
+        # Find the workflow run for check-release-pr.yaml
+        # The workflow name in the UI is "Check PR to release-* branch"
+        for suite in check_suites:
+            workflow_run = suite.get("workflowRun")
+            if not workflow_run:
+                continue
+            workflow = workflow_run.get("workflow", {})
+            workflow_name = workflow.get("name", "")
+            # Match by exact workflow name
+            if workflow_name == "Check PR to release-* branch":
+                # GraphQL returns status in uppercase (e.g., "COMPLETED"), convert to lowercase
+                status = suite.get("status", "").lower()
+
+                return {
+                    "databaseId": workflow_run["databaseId"],
+                    "status": status,
+                }
+
+        return None
+    except subprocess.CalledProcessError:
+        return None
 
 
 def rerun_workflow(run_id: int) -> None:
@@ -91,10 +162,7 @@ def main() -> int:
         print("No open PRs targeting release-* branches found.")
         return 0
 
-    # Fetch workflow runs once and index by PR number (performance optimization)
-    print(f"Fetching workflow runs for {len(prs)} PRs...")
-    runs_by_pr = get_workflow_runs_by_pr()
-    print(f"Found workflow runs for {len(runs_by_pr)} PRs")
+    owner, repo = run_gh("repo", "view", "--json", "owner,name", "-q", ".owner.login + \" \" + .name").split()
 
     counts: Counter[str] = Counter()
     failures: list[str] = []
@@ -104,7 +172,7 @@ def main() -> int:
         base = pr["baseRefName"]
         url = pr["url"]
 
-        run = latest_check_release_pr_run(number, runs_by_pr)
+        run = latest_check_release_pr_run(number, owner, repo)
         if run is None:
             failures.append(
                 f"PR #{number} ({url}): no check-release-pr run found"
