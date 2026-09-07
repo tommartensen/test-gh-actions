@@ -1,9 +1,17 @@
 name: Backport PR to release branch
 on:
-  pull_request_target:
+  # For security reasons, it will not be possible for PRs from forks to be backported with this workflow.
+  pull_request:
     types:
       - closed
       - labeled
+
+# Disables permissions of the default GITHUB_TOKEN, it's not used anyway.
+permissions: {}
+
+defaults:
+  run:
+    shell: bash
 
 jobs:
   backport:
@@ -30,12 +38,13 @@ jobs:
           labels_template: '["backport"]'
 
       - name: Assign backport PRs to original author
-        if: steps.backport.outputs.created_pull_requests != ''
+        if: steps.backport.outcome == 'success' && steps.backport.outputs.created_pull_requests != '{}'
         env:
           GH_TOKEN: ${{ secrets.RHACS_BOT_GITHUB_TOKEN }}
           CREATED_PRS: ${{ steps.backport.outputs.created_pull_requests }}
           ORIGINAL_AUTHOR: ${{ github.event.pull_request.user.login }}
         run: |
+          set -u
           echo "Created PRs: ${CREATED_PRS}"
           echo "Original author: ${ORIGINAL_AUTHOR}"
 
@@ -47,9 +56,9 @@ jobs:
             for pr_number in $(echo "${CREATED_PRS}" | jq -r '.[]'); do
               echo "Assigning PR #${pr_number} to ${ORIGINAL_AUTHOR}"
               if ! gh pr edit "${pr_number}" --add-assignee "${ORIGINAL_AUTHOR}" --repo "${{ github.repository }}"; then
-                echo "Warning: Failed to assign PR #${pr_number} to ${ORIGINAL_AUTHOR}"
+                >&2 echo "Warning: Failed to assign PR #${pr_number} to ${ORIGINAL_AUTHOR}"
               fi
             done
           else
-            echo "Warning: Author ${ORIGINAL_AUTHOR} cannot be assigned to PRs in this repository"
+            >&2 echo "Warning: Author ${ORIGINAL_AUTHOR} cannot be assigned to PRs in this repository"
           fi
