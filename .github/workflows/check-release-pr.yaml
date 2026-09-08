@@ -58,6 +58,7 @@ jobs:
         id: install-relacs
         uses: stackrox/actions/release/install-relacs@577eac45215ba551032ad6fa8d9eb59671511787 # ratchet:stackrox/actions/release/install-relacs@v1
         with:
+          binary_dir: /home/runner/relacs-dir
           token: ${{ secrets.RHACS_BOT_GITHUB_TOKEN }}
 
       - name: Check release branch PR
