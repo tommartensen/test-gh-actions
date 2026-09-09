@@ -1,6 +1,6 @@
 name: Backport PR to release branch
 on:
-  # For security reasons, it will not be possible for PRs from forks to be backported with this workflow.
+  # From security considerations, it will not be possible for PRs from forks to be backported with this workflow.
   pull_request:
     types:
       - closed
