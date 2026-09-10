@@ -35,7 +35,7 @@ jobs:
         id: install-relacs2
         uses: stackrox/actions/release/install-relacs@tm/configurable-install-dir-relacs # ratchet:stackrox/actions/release/install-relacs@v1
         with:
-          relacs_install_path: "$HOME/relacs-dir"
+          relacs_install_path: "$HOME/relacs-dir2"
           token: ${{ secrets.RHACS_BOT_GITHUB_TOKEN }}
 
       # Only install if cache missed
@@ -43,7 +43,7 @@ jobs:
         id: install-relacs3
         uses: stackrox/actions/release/install-relacs@tm/configurable-install-dir-relacs # ratchet:stackrox/actions/release/install-relacs@v1
         with:
-          relacs_install_path: $HOME_SWEET_HOME/relacs-dir
+          relacs_install_path: "$HOME_SWEET_HOME/relacs-dir3"
           token: ${{ secrets.RHACS_BOT_GITHUB_TOKEN }}
 
       - name: Check release branch PR
