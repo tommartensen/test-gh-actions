@@ -43,17 +43,17 @@ def main() -> int:
             continue
 
         try:
-            rerun_workflow(run_id)
+            result = rerun_workflow(run_id, pr["headRefName"])
         except subprocess.CalledProcessError as exc:
             stderr = (exc.stderr or "").strip()
             failures.append(f"PR #{number} ({url}): failed to re-run {run_id}: {stderr}")
             continue
 
         counts[base] += 1
-        print(f"Re-triggered check-release-pr for PR #{number} → {base} (run {run_id})")
+        print(f"Re-triggered {WORKFLOW_FILE} for PR #{number} → {base} ({result})")
 
     print()
-    print("Successfully re-triggered check-release-pr:")
+    print(f"Successfully re-triggered {WORKFLOW_FILE}:")
     if counts:
         for base in sorted(counts):
             print(f"  {base}: {counts[base]} PR(s)")
@@ -200,7 +200,7 @@ def latest_check_release_pr_run(pr_number: int, owner: str, repo: str) -> dict |
 
                 return {
                     "runId": workflow_run["databaseId"],
-                    "status": suite.get("status", ""),
+                    "status": suite.get("status", "").lower(),
                 }
 
             # If we found nothing and there are more pages, continue with the next page
@@ -215,8 +215,19 @@ def latest_check_release_pr_run(pr_number: int, owner: str, repo: str) -> dict |
         return None
 
 
-def rerun_workflow(run_id: int) -> None:
-    run_gh("run", "rerun", str(run_id))
+def rerun_workflow(run_id: int, head_ref: str) -> str:
+    try:
+        run_gh("run", "rerun", str(run_id))
+        return f"run {run_id}"
+    except subprocess.CalledProcessError as exc:
+        stderr = (exc.stderr or "").strip()
+        # GitHub doesn't allow reruns for runs older than 30 days
+        if "cannot be rerun" in stderr.lower() or "can no longer be rerun" in stderr.lower():
+            # Trigger a fresh workflow run
+            run_gh("workflow", "run", WORKFLOW_FILE, "--ref", head_ref)
+            return f"fresh run (expired run {run_id})"
+        # Re-raise if it's a different error
+        raise
 
 
 if __name__ == "__main__":
