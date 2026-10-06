@@ -34,7 +34,7 @@ jobs:
             PR_NUMBER="${{ inputs.pr_number }}"
             echo "Fetching PR #${PR_NUMBER} details..."
 
-            PR_DATA=$(gh pr view "${PR_NUMBER}" --json url,headRepository,headRepositoryOwner,baseRefName)
+            PR_DATA=$(gh pr view "${PR_NUMBER}" -R "${{ github.repository }}" --json url,headRepository,headRepositoryOwner,baseRefName)
             echo "pr_url=$(echo "${PR_DATA}" | jq -r '.url')" | tee -a "${GITHUB_OUTPUT}"
             echo "head_repo=$(echo "${PR_DATA}" | jq -r '.headRepositoryOwner.login + "/" + .headRepository.name')" | tee -a "${GITHUB_OUTPUT}"
             echo "base_ref=$(echo "${PR_DATA}" | jq -r '.baseRefName')" | tee -a "${GITHUB_OUTPUT}"
