@@ -19,13 +19,13 @@ jobs:
       - name: Fail if fork PR
         if: github.event.pull_request.head.repo.full_name != github.repository
         run: |
-          echo "::error::PRs to release branches cannot be forks. Tag @stackrox/release-mgmt on your PR to get help."
+          echo "::error::PRs to release branches cannot be forks."
+          echo "::error::Instead, let your PR target the default branch of this repository and the team will backport it, if necessary."
           exit 1
 
-      # Only install if cache missed
       - name: Install relacs
         id: install-relacs
-        uses: stackrox/actions/release/install-relacs@tm/configurable-install-dir-relacs # ratchet:stackrox/actions/release/install-relacs@v1
+        uses: stackrox/actions/release/install-relacs@577eac45215ba551032ad6fa8d9eb59671511787 # ratchet:stackrox/actions/release/install-relacs@v1
         with:
           token: ${{ secrets.RHACS_BOT_GITHUB_TOKEN }}
 
