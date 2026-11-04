@@ -1,4 +1,4 @@
-name: Periodically re-run check-release-pr on release-* PRs
+name: Periodically run check-release-pr for all release-* PRs
 
 on:
   schedule:
@@ -8,10 +8,11 @@ on:
 
 permissions:
   contents: read
+  pull-requests: write
 
 jobs:
   rerun:
-    name: Re-run check-release-pr on release-* PRs
+    name: Run check-release-pr for all release-* PRs
     runs-on: ubuntu-latest
     concurrency:
       group: ${{ github.workflow }}-rerun
@@ -23,7 +24,23 @@ jobs:
           ref: ${{ github.event.repository.default_branch }}
           persist-credentials: false
 
-      - name: Re-run check-release-pr workflows
+      - name: Install relacs
+        id: install-relacs
+        uses: stackrox/actions/release/install-relacs@577eac45215ba551032ad6fa8d9eb59671511787 # ratchet:stackrox/actions/release/install-relacs@v1
+        with:
+          token: ${{ secrets.RHACS_BOT_GITHUB_TOKEN }}
+          version: v0.0.15+check-release-pr
+
+      - name: Check release branch PRs
+        id: check-pr
         env:
-          GH_TOKEN: ${{ secrets.RHACS_BOT_GITHUB_TOKEN }}
-        run: .github/workflows/scripts/rerun-check-release-pr.py
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # JIRA_USER secret contains the email address of the rhacs-bot user
+          JIRA_EMAIL: ${{ secrets.JIRA_USER }}
+          JIRA_TOKEN: ${{ secrets.JIRA_TOKEN }}
+        run: |
+          set -uo pipefail
+          # Extract the repository name from the full repository path
+          REPO="${GITHUB_REPOSITORY##*/}"
+          echo "# Release branch PR check results" | tee -a "${GITHUB_STEP_SUMMARY}"
+          relacs github check-release-pr --dry-run --org "${GITHUB_REPOSITORY_OWNER}" --repo "${REPO}" | tee -a "${GITHUB_STEP_SUMMARY}"

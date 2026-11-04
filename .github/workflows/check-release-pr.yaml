@@ -21,54 +21,104 @@ permissions: {}
 jobs:
   check-release-pr:
     runs-on: ubuntu-latest
-    steps:
-      - name: Resolve PR details
-        id: pr
-        env:
-          GH_TOKEN: ${{ secrets.RHACS_BOT_GITHUB_TOKEN }}
-        run: |
-          set -euo pipefail
+    steps: []
+      # - name: Resolve PR details
+      #   id: pr
+      #   env:
+      #     GH_TOKEN: ${{ secrets.RHACS_BOT_GITHUB_TOKEN }}
+      #   run: |
+      #     set -euo pipefail
 
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            # Fetch PR details from the input
-            PR_NUMBER="${{ inputs.pr_number }}"
-            echo "Fetching PR #${PR_NUMBER} details..."
+      #     if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+      #       # Fetch PR details from the input
+      #       PR_NUMBER="${{ inputs.pr_number }}"
+      #       echo "Fetching PR #${PR_NUMBER} details..."
 
-            PR_DATA=$(gh pr view "${PR_NUMBER}" -R "${{ github.repository }}" --json url,headRepository,headRepositoryOwner,baseRefName)
-            echo "pr_url=$(echo "${PR_DATA}" | jq -r '.url')" | tee -a "${GITHUB_OUTPUT}"
-            echo "head_repo=$(echo "${PR_DATA}" | jq -r '.headRepositoryOwner.login + "/" + .headRepository.name')" | tee -a "${GITHUB_OUTPUT}"
-            echo "base_ref=$(echo "${PR_DATA}" | jq -r '.baseRefName')" | tee -a "${GITHUB_OUTPUT}"
-            echo "is_fork=$([[ $(echo "${PR_DATA}" | jq -r '.headRepositoryOwner.login + "/" + .headRepository.name') != "${{ github.repository }}" ]] && echo "true" || echo "false")" | tee -a "${GITHUB_OUTPUT}"
-          else
-            # Use data from pull_request event
-            echo "pr_url=${{ github.event.pull_request.html_url }}" | tee -a "${GITHUB_OUTPUT}"
-            echo "head_repo=${{ github.event.pull_request.head.repo.full_name }}" | tee -a "${GITHUB_OUTPUT}"
-            echo "base_ref=${{ github.event.pull_request.base.ref }}" | tee -a "${GITHUB_OUTPUT}"
-            echo "is_fork=${{ github.event.pull_request.head.repo.full_name != github.repository }}" | tee -a "${GITHUB_OUTPUT}"
-          fi
+      #       PR_DATA=$(gh pr view "${PR_NUMBER}" -R "${{ github.repository }}" --json url,headRepository,headRepositoryOwner,baseRefName,headRefOid)
+      #       echo "pr_url=$(echo "${PR_DATA}" | jq -r '.url')" | tee -a "${GITHUB_OUTPUT}"
+      #       echo "head_repo=$(echo "${PR_DATA}" | jq -r '.headRepositoryOwner.login + "/" + .headRepository.name')" | tee -a "${GITHUB_OUTPUT}"
+      #       echo "base_ref=$(echo "${PR_DATA}" | jq -r '.baseRefName')" | tee -a "${GITHUB_OUTPUT}"
+      #       echo "head_sha=$(echo "${PR_DATA}" | jq -r '.headRefOid')" | tee -a "${GITHUB_OUTPUT}"
+      #       echo "is_fork=$([[ $(echo "${PR_DATA}" | jq -r '.headRepositoryOwner.login + "/" + .headRepository.name') != "${{ github.repository }}" ]] && echo "true" || echo "false")" | tee -a "${GITHUB_OUTPUT}"
+      #     else
+      #       # Use data from pull_request event
+      #       echo "pr_url=${{ github.event.pull_request.html_url }}" | tee -a "${GITHUB_OUTPUT}"
+      #       echo "head_repo=${{ github.event.pull_request.head.repo.full_name }}" | tee -a "${GITHUB_OUTPUT}"
+      #       echo "base_ref=${{ github.event.pull_request.base.ref }}" | tee -a "${GITHUB_OUTPUT}"
+      #       echo "head_sha=${{ github.event.pull_request.head.sha }}" | tee -a "${GITHUB_OUTPUT}"
+      #       echo "is_fork=${{ github.event.pull_request.head.repo.full_name != github.repository }}" | tee -a "${GITHUB_OUTPUT}"
+      #     fi
 
-      - name: Fail if fork PR
-        if: steps.pr.outputs.is_fork == 'true'
-        run: |
-          echo "::error::PRs to release branches cannot be forks."
-          echo "::error::Instead, let your PR target the default branch of this repository and the team will backport it, if necessary."
-          exit 1
+      # - name: Create check run
+      #   id: check-run
+      #   if: github.event_name == 'workflow_dispatch'
+      #   env:
+      #     GH_TOKEN: ${{ secrets.RHACS_BOT_GITHUB_TOKEN }}
+      #   run: |
+      #     set -euo pipefail
 
-      - name: Install relacs
-        id: install-relacs
-        uses: stackrox/actions/release/install-relacs@577eac45215ba551032ad6fa8d9eb59671511787 # ratchet:stackrox/actions/release/install-relacs@v1
-        with:
-          token: ${{ secrets.RHACS_BOT_GITHUB_TOKEN }}
+      #     # Create a check run on the PR's head commit
+      #     CHECK_RUN_ID=$(gh api \
+      #       -X POST \
+      #       "/repos/${{ github.repository }}/check-runs" \
+      #       -f name="${{ github.workflow }}" \
+      #       -f head_sha="${{ steps.pr.outputs.head_sha }}" \
+      #       -f status="in_progress" \
+      #       -f details_url="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+      #       --jq '.id')
 
-      - name: Check release branch PR
-        env:
-          GH_TOKEN: ${{ secrets.RHACS_BOT_GITHUB_TOKEN }}
-          # JIRA_USER secret contains the email address of the rhacs-bot user
-          JIRA_EMAIL: ${{ secrets.JIRA_USER }}
-          JIRA_TOKEN: ${{ secrets.JIRA_TOKEN }}
-          KUBECTL_PLUGIN_KA_HOST: ${{ vars.ACS_KUBECTL_PLUGIN_KA_HOST }}
-          PR_URL: ${{ steps.pr.outputs.pr_url }}
-        run: |
-          set -uo pipefail
-          echo "# Release branch PR check results" | tee -a "${GITHUB_STEP_SUMMARY}"
-          relacs github check-release-pr --pull-request "${PR_URL}" | tee -a "${GITHUB_STEP_SUMMARY}"
+      #     echo "check_run_id=${CHECK_RUN_ID}" | tee -a "${GITHUB_OUTPUT}"
+      #     echo "Created check run ${CHECK_RUN_ID} for commit ${{ steps.pr.outputs.head_sha }}"
+
+      # - name: Fail if fork PR
+      #   if: steps.pr.outputs.is_fork == 'true'
+      #   run: |
+      #     echo "::error::PRs to release branches cannot be forks."
+      #     echo "::error::Instead, let your PR target the default branch of this repository and the team will backport it, if necessary."
+      #     exit 1
+
+      # - name: Install relacs
+      #   id: install-relacs
+      #   uses: stackrox/actions/release/install-relacs@577eac45215ba551032ad6fa8d9eb59671511787 # ratchet:stackrox/actions/release/install-relacs@v1
+      #   with:
+      #     token: ${{ secrets.RHACS_BOT_GITHUB_TOKEN }}
+
+      # - name: Check release branch PR
+      #   id: check-pr
+      #   env:
+      #     GH_TOKEN: ${{ secrets.RHACS_BOT_GITHUB_TOKEN }}
+      #     # JIRA_USER secret contains the email address of the rhacs-bot user
+      #     JIRA_EMAIL: ${{ secrets.JIRA_USER }}
+      #     JIRA_TOKEN: ${{ secrets.JIRA_TOKEN }}
+      #     KUBECTL_PLUGIN_KA_HOST: ${{ vars.ACS_KUBECTL_PLUGIN_KA_HOST }}
+      #     PR_URL: ${{ steps.pr.outputs.pr_url }}
+      #   run: |
+      #     set -uo pipefail
+      #     echo "# Release branch PR check results" | tee -a "${GITHUB_STEP_SUMMARY}"
+      #     relacs github check-release-pr --pull-request "${PR_URL}" | tee -a "${GITHUB_STEP_SUMMARY}"
+
+      # - name: Complete check run
+      #   if: always() && github.event_name == 'workflow_dispatch' && steps.check-run.outputs.check_run_id
+      #   env:
+      #     GH_TOKEN: ${{ secrets.RHACS_BOT_GITHUB_TOKEN }}
+      #   run: |
+      #     set -euo pipefail
+
+      #     # Determine conclusion based on job status
+      #     if [[ "${{ job.status }}" == "success" ]]; then
+      #       CONCLUSION="success"
+      #     elif [[ "${{ job.status }}" == "cancelled" ]]; then
+      #       CONCLUSION="cancelled"
+      #     else
+      #       CONCLUSION="failure"
+      #     fi
+
+      #     # Update the check run with the final status
+      #     gh api \
+      #       -X PATCH \
+      #       "/repos/${{ github.repository }}/check-runs/${{ steps.check-run.outputs.check_run_id }}" \
+      #       -f status="completed" \
+      #       -f conclusion="${CONCLUSION}" \
+      #       -f details_url="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+      #     echo "Completed check run ${{ steps.check-run.outputs.check_run_id }} with conclusion: ${CONCLUSION}"
