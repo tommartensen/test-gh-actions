@@ -1,7 +1,7 @@
 name: Periodically run check-release-pr for all release-* PRs
 
 on:
-  schedule: []
+  # schedule:
     # # Every 15 minutes
     # - cron: "*/15 * * * *"
   workflow_dispatch:
