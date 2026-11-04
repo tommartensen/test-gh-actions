@@ -1,9 +1,9 @@
 name: Periodically run check-release-pr for all release-* PRs
 
 on:
-  schedule:
-    # Every 15 minutes
-    - cron: "*/15 * * * *"
+  schedule: []
+    # # Every 15 minutes
+    # - cron: "*/15 * * * *"
   workflow_dispatch:
 
 permissions:
@@ -34,7 +34,8 @@ jobs:
       - name: Check release branch PRs
         id: check-pr
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.RHACS_BOT_GITHUB_TOKEN }}
+          # GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # JIRA_USER secret contains the email address of the rhacs-bot user
           JIRA_EMAIL: ${{ secrets.JIRA_USER }}
           JIRA_TOKEN: ${{ secrets.JIRA_TOKEN }}
