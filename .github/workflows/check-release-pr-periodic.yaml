@@ -11,11 +11,11 @@ permissions:
   pull-requests: write
 
 jobs:
-  rerun:
+  periodic-check-release-pr:
     name: Run check-release-pr for all release-* PRs
     runs-on: ubuntu-latest
     concurrency:
-      group: ${{ github.workflow }}-rerun
+      group: ${{ github.workflow }}-periodic
       cancel-in-progress: false
     steps:
       - name: Checkout
