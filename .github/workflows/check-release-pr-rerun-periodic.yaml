@@ -43,4 +43,4 @@ jobs:
           # Extract the repository name from the full repository path
           REPO="${GITHUB_REPOSITORY##*/}"
           echo "# Release branch PR check results" | tee -a "${GITHUB_STEP_SUMMARY}"
-          relacs github check-release-pr --dry-run --org "${GITHUB_REPOSITORY_OWNER}" --repo "${REPO}" | tee -a "${GITHUB_STEP_SUMMARY}"
+          relacs github check-release-pr --dry-run=false --org "${GITHUB_REPOSITORY_OWNER}" --repo "${REPO}" | tee -a "${GITHUB_STEP_SUMMARY}"
