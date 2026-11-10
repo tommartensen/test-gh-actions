@@ -2,7 +2,7 @@ name: Check PR to release-* branch
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened, edited]
+    types: [opened, synchronize, reopened, edited, ready_for_review]
     branches:
       - release-*
   workflow_dispatch:
@@ -16,11 +16,17 @@ defaults:
   run:
     shell: bash
 
-permissions: {}
+permissions:
+  contents: read
+  pull-requests: write
 
 jobs:
   check-release-pr:
+    name: Run check-release-pr for this PR
     runs-on: ubuntu-latest
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+      cancel-in-progress: false
     steps:
       - name: Resolve PR details
         id: pr
@@ -28,47 +34,37 @@ jobs:
           GH_TOKEN: ${{ secrets.RHACS_BOT_GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            # Fetch PR details from the input
-            PR_NUMBER="${{ inputs.pr_number }}"
-            echo "Fetching PR #${PR_NUMBER} details..."
-
-            PR_DATA=$(gh pr view "${PR_NUMBER}" --json url,headRepository,headRepositoryOwner,baseRefName)
-            echo "pr_url=$(echo "${PR_DATA}" | jq -r '.url')" | tee -a "${GITHUB_OUTPUT}"
-            echo "head_repo=$(echo "${PR_DATA}" | jq -r '.headRepositoryOwner.login + "/" + .headRepository.name')" | tee -a "${GITHUB_OUTPUT}"
-            echo "base_ref=$(echo "${PR_DATA}" | jq -r '.baseRefName')" | tee -a "${GITHUB_OUTPUT}"
-            echo "is_fork=$([[ $(echo "${PR_DATA}" | jq -r '.headRepositoryOwner.login + "/" + .headRepository.name') != "${{ github.repository }}" ]] && echo "true" || echo "false")" | tee -a "${GITHUB_OUTPUT}"
+            number="${{ inputs.pr_number }}"
           else
-            # Use data from pull_request event
-            echo "pr_url=${{ github.event.pull_request.html_url }}" | tee -a "${GITHUB_OUTPUT}"
-            echo "head_repo=${{ github.event.pull_request.head.repo.full_name }}" | tee -a "${GITHUB_OUTPUT}"
-            echo "base_ref=${{ github.event.pull_request.base.ref }}" | tee -a "${GITHUB_OUTPUT}"
-            echo "is_fork=${{ github.event.pull_request.head.repo.full_name != github.repository }}" | tee -a "${GITHUB_OUTPUT}"
+            number="${{ github.event.pull_request.number }}"
           fi
-
-      - name: Fail if fork PR
-        if: steps.pr.outputs.is_fork == 'true'
-        run: |
-          echo "::error::PRs to release branches cannot be forks."
-          echo "::error::Instead, let your PR target the default branch of this repository and the team will backport it, if necessary."
-          exit 1
+          echo "number=${number}" | tee -a "${GITHUB_OUTPUT}"
 
       - name: Install relacs
         id: install-relacs
-        uses: stackrox/actions/release/install-relacs@577eac45215ba551032ad6fa8d9eb59671511787 # ratchet:stackrox/actions/release/install-relacs@v1
+        # TODO: use published version once available, after merging https://github.com/stackrox/actions/pull/113
+        uses: stackrox/actions/release/install-relacs@caad0d5ef93aa60413f815bfdcb932411b482bf8 # ratchet:stackrox/actions/release/install-relacs@v1
         with:
-          token: ${{ secrets.RHACS_BOT_GITHUB_TOKEN }}
+          version: v0.0.15+check-release-pr
 
       - name: Check release branch PR
+        id: check-pr
         env:
-          GH_TOKEN: ${{ secrets.RHACS_BOT_GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # JIRA_USER secret contains the email address of the rhacs-bot user
           JIRA_EMAIL: ${{ secrets.JIRA_USER }}
           JIRA_TOKEN: ${{ secrets.JIRA_TOKEN }}
-          KUBECTL_PLUGIN_KA_HOST: ${{ vars.ACS_KUBECTL_PLUGIN_KA_HOST }}
-          PR_URL: ${{ steps.pr.outputs.pr_url }}
+          PR_NUMBER: ${{ steps.pr.outputs.number }}
         run: |
           set -uo pipefail
-          echo "# Release branch PR check results" | tee -a "${GITHUB_STEP_SUMMARY}"
-          relacs github check-release-pr --pull-request "${PR_URL}" | tee -a "${GITHUB_STEP_SUMMARY}"
+          # Extract the repository name from the full repository path
+          REPO="${GITHUB_REPOSITORY##*/}"
+          echo "# Release branch PR check" | tee -a "${GITHUB_STEP_SUMMARY}"
+          relacs github check-release-pr \
+            --dry-run=false \
+            --org "${GITHUB_REPOSITORY_OWNER}" \
+            --repo "${REPO}" \
+            --pull-request "${PR_NUMBER}" \
+            --reviewer-login "github-actions[bot]" \
+          2>&1 | tee -a "${GITHUB_STEP_SUMMARY}"
