@@ -24,6 +24,7 @@ jobs:
     steps:
       - name: Install relacs
         id: install-relacs
+        # TODO: use published version once available, after merging https://github.com/stackrox/actions/pull/113
         uses: stackrox/actions/release/install-relacs@caad0d5ef93aa60413f815bfdcb932411b482bf8 # ratchet:stackrox/actions/release/install-relacs@v1
         with:
           version: v0.0.15+check-release-pr
@@ -41,8 +42,8 @@ jobs:
           REPO="${GITHUB_REPOSITORY##*/}"
           echo "# Release branch PR check results" | tee -a "${GITHUB_STEP_SUMMARY}"
           relacs github check-release-pr \
-          --dry-run=false\
-          --org "${GITHUB_REPOSITORY_OWNER}"\
-          --repo "${REPO}"\
-          --reviewer-login "github-actions[bot]"\
+          --dry-run=false \
+          --org "${GITHUB_REPOSITORY_OWNER}" \
+          --repo "${REPO}" \
+          --reviewer-login "github-actions[bot]" \
           2>&1 | tee -a "${GITHUB_STEP_SUMMARY}"
