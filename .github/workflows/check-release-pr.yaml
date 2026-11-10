@@ -43,7 +43,7 @@ jobs:
 
       - name: Install relacs
         id: install-relacs
-        uses: stackrox/actions/release/install-relacs@61122692a35d71ac52614c09d0eb01b6497e0152 # ratchet:stackrox/actions/release/install-relacs@v1
+        uses: stackrox/actions/release/install-relacs@9272b375c3b07c50cd427e4ac93383b42899c222 # ratchet:stackrox/actions/release/install-relacs@v1
         with:
           version: v0.0.15+check-release-pr
 
