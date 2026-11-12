@@ -43,8 +43,7 @@ jobs:
 
       - name: Install relacs
         id: install-relacs
-        # TODO: use published version once available, after merging https://github.com/stackrox/actions/pull/113
-        uses: stackrox/actions/release/install-relacs@caad0d5ef93aa60413f815bfdcb932411b482bf8 # ratchet:stackrox/actions/release/install-relacs@v1
+        uses: stackrox/actions/release/install-relacs@5f4863a601c6de23bfafd42ce1912ad498a75c25 # ratchet:stackrox/actions/release/install-relacs@v1
         with:
           version: v0.0.15+check-release-pr
 
