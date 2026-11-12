@@ -48,7 +48,6 @@ jobs:
           version: v0.0.15+check-release-pr
 
       - name: Check release branch PR
-        id: check-pr
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # JIRA_USER secret contains the email address of the rhacs-bot user
