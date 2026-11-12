@@ -24,7 +24,7 @@ jobs:
     steps:
       - name: Install relacs
         id: install-relacs
-        uses: stackrox/actions/release/install-relacs@9272b375c3b07c50cd427e4ac93383b42899c222 # ratchet:stackrox/actions/release/install-relacs@v1
+        uses: stackrox/actions/release/install-relacs@5f4863a601c6de23bfafd42ce1912ad498a75c25 # ratchet:stackrox/actions/release/install-relacs@v1
         with:
           version: v0.0.15+check-release-pr
 
